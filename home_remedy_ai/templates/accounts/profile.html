@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+
+{% block title %}My Profile - HomeHeal{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card">
+                <div class="card-header text-center">
+                    <h3><i class="fas fa-user me-2"></i>My Profile</h3>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="text-center mb-4">
+                            {% if user.profile.profile_picture %}
+                                <img src="{{ user.profile.profile_picture.url }}" class="rounded-circle" width="150" height="150" alt="Profile">
+                            {% else %}
+                                <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center" 
+                                     style="width: 150px; height: 150px; font-size: 3rem;">
+                                    {{ user.username|first|upper }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <h5 class="mb-3"><i class="fas fa-user-circle me-2"></i>Account Information</h5>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">First Name</label>
+                                {{ user_form.first_name }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Last Name</label>
+                                {{ user_form.last_name }}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            {{ user_form.email }}
+                        </div>
+                        
+                        <hr>
+                        
+                        <h5 class="mb-3"><i class="fas fa-info-circle me-2"></i>Personal Information</h5>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Age</label>
+                                {{ profile_form.age }}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Skin Type</label>
+                                {{ profile_form.skin_type }}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Hair Type</label>
+                                {{ profile_form.hair_type }}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Allergies</label>
+                            {{ profile_form.allergies }}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Bio</label>
+                            {{ profile_form.bio }}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Profile Picture</label>
+                            {{ profile_form.profile_picture }}
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary btn-lg w-100">
+                            <i class="fas fa-save me-2"></i>Update Profile
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

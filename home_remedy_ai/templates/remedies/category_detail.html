@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ category.name }} - Problems{% endblock %}
+
+{% block content %}
+<div class="container">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'categories' %}">Categories</a></li>
+            <li class="breadcrumb-item active">{{ category.name }}</li>
+        </ol>
+    </nav>
+    
+    <div class="text-center mb-5">
+        <h1 class="display-4 fw-bold">{{ category.name }}</h1>
+        <p class="lead text-muted">{{ category.description }}</p>
+    </div>
+    
+    <div class="row g-4">
+        {% for problem in problems %}
+        <div class="col-md-6 col-lg-4">
+            <a href="{% url 'problem_detail' category.slug problem.slug %}" class="text-decoration-none">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <h5 class="card-title">{{ problem.name }}</h5>
+                            {% if problem.severity == 'severe' %}
+                                <span class="badge bg-danger">Severe</span>
+                            {% elif problem.severity == 'moderate' %}
+                                <span class="badge bg-warning">Moderate</span>
+                            {% else %}
+                                <span class="badge bg-info">Mild</span>
+                            {% endif %}
+                        </div>
+                        <p class="card-text text-muted">{{ problem.description }}</p>
+                        <div class="mt-3">
+                            <span class="badge badge-custom">
+                                {{ problem.remedies.count }} Remed{{ problem.remedies.count|pluralize:"y,ies" }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info text-center">
+                <i class="fas fa-info-circle me-2"></i>
+                No problems found in this category yet.
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

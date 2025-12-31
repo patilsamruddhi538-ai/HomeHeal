@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ problem.name }} - Remedies{% endblock %}
+
+{% block content %}
+<div class="container">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'categories' %}">Categories</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'category_detail' category.slug %}">{{ category.name }}</a></li>
+            <li class="breadcrumb-item active">{{ problem.name }}</li>
+        </ol>
+    </nav>
+    
+    <div class="text-center mb-5">
+        <h1 class="display-4 fw-bold">{{ problem.name }}</h1>
+        <p class="lead text-muted">{{ problem.description }}</p>
+        <span class="badge badge-custom">{{ category.name }}</span>
+    </div>
+    
+    <div class="row g-4">
+        {% for remedy in remedies %}
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <h4 class="card-title">{{ remedy.title }}</h4>
+                        <span class="badge bg-success">{{ remedy.effectiveness_rating }}/10</span>
+                    </div>
+                    <p class="card-text text-muted">{{ remedy.description|truncatewords:30 }}</p>
+                    
+                    <div class="mb-3">
+                        <small class="text-muted">
+                            <i class="fas fa-clock me-2"></i>{{ remedy.preparation_time|default:"15-20 mins" }}
+                        </small>
+                    </div>
+                    
+                    <a href="{% url 'remedy_detail' remedy.id %}" class="btn btn-primary w-100">
+                        <i class="fas fa-eye me-2"></i>View Full Recipe
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info text-center">
+                <i class="fas fa-info-circle me-2"></i>
+                No remedies available for this problem yet.
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

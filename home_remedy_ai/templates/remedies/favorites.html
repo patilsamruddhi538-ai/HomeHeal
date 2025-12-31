@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block title %}My Favorites - HomeHeal{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="text-center mb-5">
+        <h1 class="display-4 fw-bold">
+            <i class="fas fa-heart text-danger me-3"></i>My Favorite Remedies
+        </h1>
+        <p class="lead text-muted">Your saved remedies collection</p>
+    </div>
+    
+    <div class="row g-4">
+        {% for favorite in favorites %}
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <h5 class="card-title">{{ favorite.remedy.title }}</h5>
+                        <span class="badge bg-success">{{ favorite.remedy.effectiveness_rating }}/10</span>
+                    </div>
+                    
+                    <p class="card-text text-muted">{{ favorite.remedy.description|truncatewords:20 }}</p>
+                    
+                    <div class="mb-3">
+                        <small class="text-muted">
+                            <i class="fas fa-tag me-2"></i>{{ favorite.remedy.problem.category.name }} - {{ favorite.remedy.problem.name }}
+                        </small>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'remedy_detail' favorite.remedy.id %}" class="btn btn-primary flex-grow-1">
+                            <i class="fas fa-eye me-2"></i>View Details
+                        </a>
+                        <a href="{% url 'toggle_favorite' favorite.remedy.id %}" class="btn btn-outline-danger">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                    </div>
+                    
+                    <small class="text-muted d-block mt-2">
+                        <i class="fas fa-calendar me-2"></i>Added on {{ favorite.created_at|date:"M d, Y" }}
+                    </small>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info text-center">
+                <i class="fas fa-heart me-2"></i>
+                You haven't added any favorites yet. Start exploring remedies and save your favorites!
+                <div class="mt-3">
+                    <a href="{% url 'categories' %}" class="btn btn-primary">
+                        <i class="fas fa-search me-2"></i>Browse Remedies
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

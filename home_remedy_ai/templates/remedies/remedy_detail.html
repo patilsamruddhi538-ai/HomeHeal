@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ remedy.title }} - Remedy Details{% endblock %}
+
+{% block extra_css %}
+<style>
+    .remedy-section {
+        background: white;
+        border-radius: 15px;
+        padding: 30px;
+        margin-bottom: 30px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .section-title {
+        color: var(--gradient-start);
+        font-weight: 600;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 3px solid var(--gradient-end);
+    }
+    
+    .ingredient-item, .instruction-item, .benefit-item {
+        padding: 12px 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .ingredient-item:last-child, .instruction-item:last-child, .benefit-item:last-child {
+        border-bottom: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'categories' %}">Categories</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'category_detail' remedy.problem.category.slug %}">{{ remedy.problem.category.name }}</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'problem_detail' remedy.problem.category.slug remedy.problem.slug %}">{{ remedy.problem.name }}</a></li>
+            <li class="breadcrumb-item active">{{ remedy.title }}</li>
+        </ol>
+    </nav>
+    
+    <!-- Remedy Header -->
+    <div class="remedy-section">
+        <div class="d-flex justify-content-between align-items-start mb-4">
+            <div>
+                <h1 class="display-5 fw-bold mb-3">{{ remedy.title }}</h1>
+                <p class="lead text-muted">{{ remedy.description }}</p>
+            </div>
+            <div class="text-end">
+                <div class="mb-2">
+                    <span class="badge bg-success fs-5">{{ remedy.effectiveness_rating }}/10</span>
+                </div>
+                {% if user.is_authenticated %}
+                <a href="{% url 'toggle_favorite' remedy.id %}" class="btn btn-outline-danger">
+                    {% if is_favorite %}
+                        <i class="fas fa-heart"></i> Favorited
+                    {% else %}
+                        <i class="far fa-heart"></i> Add to Favorites
+                    {% endif %}
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-4">
+                <p><i class="fas fa-tag me-2 text-primary"></i><strong>Category:</strong> {{ remedy.problem.category.name }}</p>
+            </div>
+            <div class="col-md-4">
+                <p><i class="fas fa-exclamation-circle me-2 text-warning"></i><strong>Problem:</strong> {{ remedy.problem.name }}</p>
+            </div>
+            <div class="col-md-4">
+                <p><i class="fas fa-clock me-2 text-info"></i><strong>Prep Time:</strong> {{ remedy.preparation_time|default:"15-20 mins" }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Ingredients -->
+    <div class="remedy-section">
+        <h2 class="section-title"><i class="fas fa-list me-2"></i>Ingredients</h2>
+        <div class="row">
+            <div class="col-md-12">
+                {% for ingredient in ingredients_list %}
+                <div class="ingredient-item">
+                    <i class="fas fa-check-circle text-success me-2"></i>{{ ingredient }}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Instructions -->
+    <div class="remedy-section">
+        <h2 class="section-title"><i class="fas fa-tasks me-2"></i>Preparation Instructions</h2>
+        {% for instruction in instructions_list %}
+        <div class="instruction-item">
+            <strong>Step {{ forloop.counter }}:</strong> {{ instruction }}
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Usage -->
+    <div class="remedy-section">
+        <h2 class="section-title"><i class="fas fa-hand-holding-medical me-2"></i>How to Use</h2>
+        <div style="white-space: pre-line;">{{ remedy.usage }}</div>
+    </div>
+    
+    <!-- Benefits -->
+    <div class="remedy-section">
+        <h2 class="section-title"><i class="fas fa-star me-2"></i>Benefits</h2>
+        {% for benefit in benefits_list %}
+        <div class="benefit-item">
+            <i class="fas fa-plus-circle text-success me-2"></i>{{ benefit }}
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Chemical Info -->
+    {% if remedy.chemicals %}
+    <div class="remedy-section">
+        <h2 class="section-title"><i class="fas fa-flask me-2"></i>Active Compounds</h2>
+        <p>{{ remedy.chemicals }}</p>
+        
+        {% if remedy.reactions %}
+        <h4 class="mt-4"><i class="fas fa-atom me-2"></i>How They Work</h4>
+        <p>{{ remedy.reactions }}</p>
+        {% endif %}
+    </div>
+    {% endif %}
+    
+    <!-- Importance -->
+    {% if remedy.importance %}
+    <div class="remedy-section">
+        <h2 class="section-title"><i class="fas fa-lightbulb me-2"></i>Why This Works</h2>
+        <p>{{ remedy.importance }}</p>
+    </div>
+    {% endif %}
+    
+    <!-- Precautions -->
+    <div class="remedy-section">
+        <h2 class="section-title"><i class="fas fa-exclamation-triangle me-2 text-warning"></i>Precautions</h2>
+        <div class="alert alert-warning">
+            <strong><i class="fas fa-info-circle me-2"></i>Important:</strong>
+            <div style="white-space: pre-line;">{{ remedy.precautions }}</div>
+        </div>
+    </div>
+</div>
+{% endblock %}
