@@ -25,6 +25,21 @@ categories_data = [
         'description': 'Natural solutions for overall body wellness',
         'icon': 'fa-heart'
     },
+    {
+        'name': 'General Health and Wellness',
+        'description': 'Home Remedies for minor health issues',
+        'icon': 'fa-mortar-pestle'
+    },
+    {
+        'name': 'Mental Health & Stress Relief',
+        'description': 'Focuses on natural remedies and techniques to manage stress, anxiety, and improve mental well-being',
+        'icon': 'fa-brain'
+    },
+    {
+        'name': 'Women\'s Health',
+        'description': 'Covers common health concerns related to women, including hormonal balance, menstrual health, and overall wellness',
+        'icon': 'fa-venus'
+    },
 ]
 
 categories = {}
@@ -98,6 +113,80 @@ problems_data = [
         'name': 'Body Odor',
         'description': 'Unpleasant body smell',
         'severity': 'mild'
+    },
+    # Mental Health & Stress Relief Problems
+    {
+        'category': 'Mental Health & Stress Relief',
+        'name': 'Stress and Anxiety',
+        'description': 'Persistent worry, nervousness, and anxiety symptoms',
+        'severity': 'moderate'
+    },
+    {
+        'category': 'Mental Health & Stress Relief',
+        'name': 'Insomnia and Sleep Issues',
+        'description': 'Difficulty falling asleep, staying asleep, or poor sleep quality',
+        'severity': 'moderate'
+    },
+    {
+        'category': 'Mental Health & Stress Relief',
+        'name': 'Headaches and Migraines',
+        'description': 'Recurring headaches and migraine pain',
+        'severity': 'moderate'
+    },
+    {
+        'category': 'Mental Health & Stress Relief',
+        'name': 'Depression and Mood Swings',
+        'description': 'Persistent sadness, low mood, and emotional instability',
+        'severity': 'severe'
+    },
+    {
+        'category': 'Mental Health & Stress Relief',
+        'name': 'Memory Loss and Brain Fog',
+        'description': 'Difficulty concentrating, forgetfulness, and mental fatigue',
+        'severity': 'mild'
+    },
+    {
+        'category': 'Mental Health & Stress Relief',
+        'name': 'Fatigue and Low Energy',
+        'description': 'Constant tiredness and lack of energy throughout the day',
+        'severity': 'moderate'
+    },
+    # Women's Health Problems
+    {
+        'category': 'Women\'s Health',
+        'name': 'Menstrual Cramps',
+        'description': 'Pain and discomfort during menstrual cycle',
+        'severity': 'moderate'
+    },
+    {
+        'category': 'Women\'s Health',
+        'name': 'Hormonal Imbalance',
+        'description': 'Irregular periods, mood swings, and hormonal fluctuations',
+        'severity': 'moderate'
+    },
+    {
+        'category': 'Women\'s Health',
+        'name': 'Fertility Issues',
+        'description': 'Difficulty conceiving or subfertility concerns',
+        'severity': 'moderate'
+    },
+    {
+        'category': 'Women\'s Health',
+        'name': 'Menopausal Symptoms',
+        'description': 'Hot flashes, night sweats, mood changes, and other menopausal signs',
+        'severity': 'moderate'
+    },
+    {
+        'category': 'Women\'s Health',
+        'name': 'Breast Tenderness',
+        'description': 'Painful or tender breast tissue before menstruation',
+        'severity': 'mild'
+    },
+    {
+        'category': 'Women\'s Health',
+        'name': 'Polycystic Ovary Syndrome (PCOS)',
+        'description': 'Hormonal disorder affecting reproductive health',
+        'severity': 'moderate'
     },
 ]
 
