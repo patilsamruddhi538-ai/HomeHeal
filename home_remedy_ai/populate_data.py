@@ -28,7 +28,7 @@ categories_data = [
     {
         'name': 'General Health and Wellness',
         'description': 'Home Remedies for minor health issues',
-        'icon': 'fa-heart-pulse'
+        'icon': 'fa-capsules'
     },
     {
         'name': 'Mental Health & Stress Relief',
@@ -38,7 +38,7 @@ categories_data = [
     {
         'name': 'Women\'s Health',
         'description': 'Covers common health concerns related to women, including hormonal balance, menstrual health, and overall wellness',
-        'icon': 'fa-flower'
+        'icon': 'fa-woman'
     },
 ]
 
