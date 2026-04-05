@@ -10,8 +10,8 @@
         border-radius: 28px;
         padding: 40px;
         color: #fff;
-        background: linear-gradient(135deg, #0f172a 0%, #1d4ed8 55%, #0891b2 100%);
-        box-shadow: 0 24px 80px rgba(15, 23, 42, 0.24);
+        background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+        box-shadow: 0 20px 56px rgba(86, 171, 47, 0.35);
         margin-bottom: 28px;
     }
 
@@ -43,8 +43,8 @@
     .chat-header {
         padding: 22px 24px;
         border-bottom: 1px solid rgba(148, 163, 184, 0.16);
-        background: linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(30, 41, 59, 0.96));
-        color: #e2e8f0;
+        background: linear-gradient(180deg, rgba(86, 171, 47, 0.98), rgba(39, 174, 96, 0.98));
+        color: #f8fff7;
         border-radius: 24px 24px 0 0;
     }
 
@@ -53,8 +53,8 @@
         overflow-y: auto;
         padding: 24px;
         background:
-            radial-gradient(circle at top left, rgba(37, 99, 235, 0.08), transparent 28%),
-            radial-gradient(circle at bottom right, rgba(8, 145, 178, 0.07), transparent 32%),
+            radial-gradient(circle at top left, rgba(86, 171, 47, 0.08), transparent 28%),
+            radial-gradient(circle at bottom right, rgba(168, 224, 99, 0.14), transparent 32%),
             #f8fafc;
     }
 
@@ -70,10 +70,10 @@
 
     .bubble.user {
         margin-left: auto;
-        background: linear-gradient(135deg, #2563eb, #0f766e);
+        background: linear-gradient(135deg, var(--gradient-start), var(--secondary-color));
         color: #fff;
         border-bottom-right-radius: 6px;
-        box-shadow: 0 10px 24px rgba(37, 99, 235, 0.24);
+        box-shadow: 0 10px 24px rgba(39, 174, 96, 0.24);
     }
 
     .bubble.assistant {
@@ -82,6 +82,35 @@
         color: #0f172a;
         border-bottom-left-radius: 6px;
         box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
+    }
+
+    .assistant-card {
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        border-radius: 14px;
+        background: #f8fafc;
+        padding: 12px;
+        margin-top: 10px;
+    }
+
+    .assistant-card-title {
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 6px;
+    }
+
+    .assistant-card-list {
+        margin: 0;
+        padding-left: 1.1rem;
+    }
+
+    .assistant-card-list li {
+        margin-bottom: 4px;
+    }
+
+    .assistant-card-usage {
+        margin: 0;
+        white-space: pre-wrap;
     }
 
     .bubble-label {
@@ -116,8 +145,8 @@
         align-items: center;
         gap: 8px;
         border-radius: 999px;
-        background: rgba(37, 99, 235, 0.1);
-        color: #1d4ed8;
+        background: rgba(86, 171, 47, 0.14);
+        color: #2f7f2f;
         padding: 7px 12px;
         margin: 4px 6px 0 0;
         font-size: 0.9rem;
@@ -146,10 +175,6 @@
                     <p class="text-uppercase fw-semibold mb-2" style="letter-spacing: .12em; opacity: .8;">HomeHeal Consultation</p>
                     <h1 class="display-5 fw-bold mb-2"><i class="fas fa-comments me-3"></i>Describe your issue and get a remedy</h1>
                     <p class="lead mb-0" style="max-width: 780px;">Enter your problem and ingredients once, then continue the discussion in chat.</p>
-                </div>
-                <div class="text-end">
-                    <span class="badge bg-light text-dark px-3 py-2 mb-2"><i class="fas fa-bolt me-1"></i>AI Consultation</span>
-                    <div class="small opacity-75">If live AI is unavailable, a local remedy suggestion is still provided.</div>
                 </div>
             </div>
         </div>
@@ -299,6 +324,113 @@
             scrollToBottom();
         };
 
+        const hasStructuredRemedy = (sections) => {
+            if (!sections || typeof sections !== 'object') {
+                return false;
+            }
+
+            const ingredients = Array.isArray(sections.ingredients) ? sections.ingredients : [];
+            const instructions = Array.isArray(sections.instructions) ? sections.instructions : [];
+            const benefits = Array.isArray(sections.benefits) ? sections.benefits : [];
+            const precautions = Array.isArray(sections.precautions) ? sections.precautions : [];
+            const usage = typeof sections.usage === 'string' ? sections.usage.trim() : '';
+
+            return Boolean(ingredients.length || instructions.length || benefits.length || precautions.length || usage);
+        };
+
+        const appendStructuredAssistantBubble = (assistantPayload) => {
+            const sections = assistantPayload && assistantPayload.remedy_sections ? assistantPayload.remedy_sections : {};
+            const introText = (assistantPayload && assistantPayload.reply ? assistantPayload.reply : '').trim();
+
+            const bubble = document.createElement('div');
+            bubble.className = 'bubble assistant';
+
+            const label = document.createElement('div');
+            label.className = 'bubble-label';
+            label.textContent = 'HomeHeal AI';
+            bubble.appendChild(label);
+
+            if (introText) {
+                const intro = document.createElement('div');
+                intro.textContent = introText;
+                bubble.appendChild(intro);
+            }
+
+            const createListCard = (title, items, ordered = false) => {
+                if (!Array.isArray(items) || !items.length) {
+                    return null;
+                }
+
+                const card = document.createElement('div');
+                card.className = 'assistant-card';
+
+                const heading = document.createElement('div');
+                heading.className = 'assistant-card-title';
+                heading.textContent = title;
+                card.appendChild(heading);
+
+                const list = document.createElement(ordered ? 'ol' : 'ul');
+                list.className = 'assistant-card-list';
+
+                items.forEach((item) => {
+                    const li = document.createElement('li');
+                    li.textContent = item;
+                    list.appendChild(li);
+                });
+
+                card.appendChild(list);
+                return card;
+            };
+
+            const ingredientCard = createListCard('Ingredients', sections.ingredients || []);
+            const instructionCard = createListCard('Preparation Steps', sections.instructions || [], true);
+            const benefitCard = createListCard('Benefits', sections.benefits || []);
+            const precautionCard = createListCard('Precautions', sections.precautions || []);
+
+            [ingredientCard, instructionCard, benefitCard, precautionCard].forEach((card) => {
+                if (card) {
+                    bubble.appendChild(card);
+                }
+            });
+
+            if (sections.usage && String(sections.usage).trim()) {
+                const usageCard = document.createElement('div');
+                usageCard.className = 'assistant-card';
+
+                const usageTitle = document.createElement('div');
+                usageTitle.className = 'assistant-card-title';
+                usageTitle.textContent = 'Usage';
+
+                const usageText = document.createElement('p');
+                usageText.className = 'assistant-card-usage';
+                usageText.textContent = String(sections.usage).trim();
+
+                usageCard.appendChild(usageTitle);
+                usageCard.appendChild(usageText);
+                bubble.appendChild(usageCard);
+            }
+
+            if (assistantPayload && assistantPayload.safety_note) {
+                const safetyCard = document.createElement('div');
+                safetyCard.className = 'assistant-card';
+
+                const safetyTitle = document.createElement('div');
+                safetyTitle.className = 'assistant-card-title';
+                safetyTitle.textContent = 'AI Service Status';
+
+                const safetyText = document.createElement('p');
+                safetyText.className = 'assistant-card-usage';
+                safetyText.textContent = assistantPayload.safety_note;
+
+                safetyCard.appendChild(safetyTitle);
+                safetyCard.appendChild(safetyText);
+                bubble.appendChild(safetyCard);
+            }
+
+            chatTranscript.appendChild(bubble);
+            scrollToBottom();
+        };
+
         const renderContextIngredients = () => {
             if (!contextIngredients) {
                 return;
@@ -395,7 +527,12 @@
                     throw new Error(result.error || 'Unable to generate a remedy response right now.');
                 }
 
-                appendBubble('assistant', result.assistant || 'No response generated. Please try again.');
+                const payload = result.assistant_payload || {};
+                if (hasStructuredRemedy(payload.remedy_sections)) {
+                    appendStructuredAssistantBubble(payload);
+                } else {
+                    appendBubble('assistant', result.assistant || 'No response generated. Please try again.');
+                }
                 setStatus('Response generated successfully.', 'success');
                 setTimeout(() => setStatus('', 'info'), 3000);
             } catch (error) {

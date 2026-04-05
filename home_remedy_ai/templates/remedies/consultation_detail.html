@@ -127,6 +127,53 @@
         <div class="remedy-section">
             <h4 class="section-title"><i class="fas fa-comments me-2"></i>Conversation Transcript</h4>
 
+            {% if ai_remedy.remedy_sections.ingredients or ai_remedy.remedy_sections.instructions or ai_remedy.remedy_sections.usage or ai_remedy.remedy_sections.benefits or ai_remedy.remedy_sections.precautions %}
+            <div class="mb-4 p-3" style="background: #f8fafc; border-radius: 10px; border: 1px solid #e5e7eb;">
+                <h5 class="mb-3"><i class="fas fa-list-check me-2 text-primary"></i>Structured Remedy Plan</h5>
+
+                {% if ai_remedy.remedy_sections.ingredients %}
+                <h6 class="mt-2 mb-2">Ingredients</h6>
+                <ul>
+                    {% for ingredient in ai_remedy.remedy_sections.ingredients %}
+                    <li>{{ ingredient }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+
+                {% if ai_remedy.remedy_sections.instructions %}
+                <h6 class="mt-3 mb-2">Preparation Steps</h6>
+                <ol class="mb-3">
+                    {% for step in ai_remedy.remedy_sections.instructions %}
+                    <li>{{ step }}</li>
+                    {% endfor %}
+                </ol>
+                {% endif %}
+
+                {% if ai_remedy.remedy_sections.usage %}
+                <h6 class="mt-3 mb-2">Usage</h6>
+                <p class="mb-3">{{ ai_remedy.remedy_sections.usage }}</p>
+                {% endif %}
+
+                {% if ai_remedy.remedy_sections.benefits %}
+                <h6 class="mt-3 mb-2">Benefits</h6>
+                <ul>
+                    {% for benefit in ai_remedy.remedy_sections.benefits %}
+                    <li>{{ benefit }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+
+                {% if ai_remedy.remedy_sections.precautions %}
+                <h6 class="mt-3 mb-2">Precautions</h6>
+                <ul class="mb-0">
+                    {% for warning in ai_remedy.remedy_sections.precautions %}
+                    <li>{{ warning }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            </div>
+            {% endif %}
+
             {% if ai_remedy.consultation_context.problem_description or ai_remedy.consultation_context.available_ingredients %}
             <div class="mb-3 p-3" style="background: #f8f9fa; border-radius: 10px;">
                 {% if ai_remedy.consultation_context.problem_description %}

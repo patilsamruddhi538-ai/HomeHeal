@@ -282,6 +282,7 @@ def _save_live_chat_consultation(user, context, history, assistant_payload, requ
         'next_question': assistant_payload.get('next_question', ''),
         'safety_note': assistant_payload.get('safety_note', ''),
         'follow_up_needed': assistant_payload.get('follow_up_needed', False),
+        'remedy_sections': assistant_payload.get('remedy_sections', {}),
         'consultation_context': context,
         'conversation': history,
     }

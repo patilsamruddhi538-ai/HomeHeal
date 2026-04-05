@@ -188,14 +188,25 @@ def generate_ai_chat_reply(user_message, conversation_history, user, consultatio
         profile=profile,
         consultation_context=context,
     )
+    fallback_sections = _generate_rule_based(
+        problem_description=str(context.get("problem_description") or user_message),
+        ingredient_tokens=_parse_ingredients(str(context.get("available_ingredients") or "")),
+        profile=profile,
+    )
 
-    unavailable_note = _live_ai_unavailable_reply(failure_reason)
     return {
-        "reply": f"{fallback_reply}\n\nNote: {unavailable_note}",
+        "reply": fallback_reply,
         "matched_problem": matched_problem,
-        "next_question": "",
-        "safety_note": "If symptoms worsen, spread rapidly, or involve infection, consult a doctor.",
-        "follow_up_needed": False,
+        "next_question": "Share your skin or scalp sensitivity level and I can refine this plan further.",
+        "safety_note": _live_ai_unavailable_reply(failure_reason),
+        "follow_up_needed": True,
+        "remedy_sections": {
+            "ingredients": fallback_sections.get("ingredients", []),
+            "instructions": fallback_sections.get("instructions", []),
+            "usage": fallback_sections.get("usage", ""),
+            "benefits": fallback_sections.get("benefits", []),
+            "precautions": fallback_sections.get("precautions", []),
+        },
         "generation_source": "local_fallback",
         "failure_reason": failure_reason or "unknown",
     }
@@ -651,29 +662,43 @@ def _build_local_chat_fallback_reply(user_message, profile, consultation_context
     ingredient_tokens = _parse_ingredients(ingredients_text)
     sections = _generate_rule_based(problem_description, ingredient_tokens, profile)
 
-    ingredients_line = ", ".join(item.split(" - ")[0] for item in sections.get("ingredients", [])[:4])
-    if not ingredients_line:
-        ingredients_line = "yogurt, aloe vera"
+    ingredients = sections.get("ingredients", [])
+    instructions = sections.get("instructions", [])
+    benefits = sections.get("benefits", [])
+    precautions = sections.get("precautions", [])
 
-    instructions = sections.get("instructions", [])[:4]
+    ingredient_text = "\n".join(f"- {item}" for item in ingredients)
+    if not ingredient_text:
+        ingredient_text = "- Aloe vera gel - 1 tbsp\n- Yogurt - 1 tbsp"
+
     instruction_text = "\n".join(f"{index + 1}. {step}" for index, step in enumerate(instructions))
     if not instruction_text:
         instruction_text = (
-            "1. Mix the ingredients into a smooth paste.\n"
-            "2. Patch test first.\n"
+            "1. Mix selected ingredients into a smooth paste.\n"
+            "2. Patch test first for 24 hours.\n"
             "3. Apply a thin layer and rinse after 15 minutes."
         )
 
-    precautions = sections.get("precautions", [])[:2]
-    precaution_text = " ".join(precautions) if precautions else "Patch test first and stop if irritation appears."
+    benefit_text = "\n".join(f"- {item}" for item in benefits)
+    if not benefit_text:
+        benefit_text = "- Supports gentle symptom relief with home ingredients."
+
+    precaution_text = "\n".join(f"- {item}" for item in precautions)
+    if not precaution_text:
+        precaution_text = "- Patch test first and stop if irritation appears."
 
     reply = (
-        f"Based on your concern, here is a starter remedy for {sections.get('matched_problem', 'General Care')}.\n"
-        f"Recommended ingredients: {ingredients_line}.\n\n"
-        f"How to use:\n{instruction_text}\n\n"
-        f"Usage: {sections.get('usage', 'Use 2 times weekly and monitor response.')}\n"
-        f"Safety: {precaution_text}\n"
-        "If you share exact symptom severity and any allergies, I can refine this further."
+        f"Based on your concern, here is your complete remedy plan for {sections.get('matched_problem', 'General Care')}.\n\n"
+        "Recommended ingredients:\n"
+        f"{ingredient_text}\n\n"
+        "Preparation and application steps:\n"
+        f"{instruction_text}\n\n"
+        f"Usage schedule:\n{sections.get('usage', 'Use 2 times weekly and monitor response.')}\n\n"
+        "Expected benefits:\n"
+        f"{benefit_text}\n\n"
+        "Safety precautions:\n"
+        f"{precaution_text}\n\n"
+        "Share severity, duration, and allergy details to get a more precise version of this plan."
     )
 
     return reply, sections.get("matched_problem", "General Care")
@@ -699,6 +724,7 @@ def _normalize_sections(data):
         "next_question": str(data.get("next_question") or ""),
         "safety_note": str(data.get("safety_note") or ""),
         "follow_up_needed": bool(data.get("follow_up_needed")),
+        "remedy_sections": _safe_remedy_sections(data.get("remedy_sections")),
         "conversation": _safe_conversation_list(data.get("conversation")),
         "consultation_context": _safe_dict(data.get("consultation_context")),
     }
@@ -734,6 +760,25 @@ def _safe_conversation_list(value):
         conversation.append({"role": "assistant" if role == "model" else role, "content": content})
 
     return conversation
+
+
+def _safe_remedy_sections(value):
+    if not isinstance(value, dict):
+        return {
+            "ingredients": [],
+            "instructions": [],
+            "usage": "",
+            "benefits": [],
+            "precautions": [],
+        }
+
+    return {
+        "ingredients": _safe_list(value.get("ingredients")),
+        "instructions": _safe_list(value.get("instructions")),
+        "usage": str(value.get("usage") or ""),
+        "benefits": _safe_list(value.get("benefits")),
+        "precautions": _safe_list(value.get("precautions")),
+    }
 
 
 def _dedupe_list(items):
