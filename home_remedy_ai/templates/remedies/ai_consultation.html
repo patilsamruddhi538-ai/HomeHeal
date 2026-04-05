@@ -4,179 +4,265 @@
 
 {% block extra_css %}
 <style>
-    .ai-hero {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 60px 0;
-        border-radius: 20px;
-        margin-bottom: 40px;
-        text-align: center;
-    }
-    
-    .consultation-form {
-        background: white;
-        border-radius: 20px;
+    .consultation-hero {
+        position: relative;
+        overflow: hidden;
+        border-radius: 28px;
         padding: 40px;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-    }
-    
-    .history-card {
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-    
-    .history-card:hover {
-        transform: translateX(5px);
-        box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        color: #fff;
+        background: linear-gradient(135deg, #0f172a 0%, #1d4ed8 55%, #0891b2 100%);
+        box-shadow: 0 24px 80px rgba(15, 23, 42, 0.24);
+        margin-bottom: 28px;
     }
 
-    .chip-wrap {
-        border: 2px solid #e0e0e0;
-        border-radius: 12px;
-        padding: 10px;
-        min-height: 52px;
+    .consultation-hero::after {
+        content: '';
+        position: absolute;
+        inset: auto -120px -140px auto;
+        width: 260px;
+        height: 260px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.08);
+        filter: blur(2px);
+    }
+
+    .chat-panel,
+    .support-panel {
+        background: rgba(255, 255, 255, 0.96);
+        border-radius: 24px;
+        box-shadow: 0 18px 54px rgba(15, 23, 42, 0.12);
+        border: 1px solid rgba(148, 163, 184, 0.16);
+    }
+
+    .chat-panel {
+        min-height: 760px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .chat-header {
+        padding: 22px 24px;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+        background: linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(30, 41, 59, 0.96));
+        color: #e2e8f0;
+        border-radius: 24px 24px 0 0;
+    }
+
+    .chat-transcript {
+        flex: 1;
+        overflow-y: auto;
+        padding: 24px;
+        background:
+            radial-gradient(circle at top left, rgba(37, 99, 235, 0.08), transparent 28%),
+            radial-gradient(circle at bottom right, rgba(8, 145, 178, 0.07), transparent 32%),
+            #f8fafc;
+    }
+
+    .bubble {
+        max-width: 82%;
+        padding: 14px 16px;
+        border-radius: 20px;
+        margin-bottom: 14px;
+        line-height: 1.55;
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+
+    .bubble.user {
+        margin-left: auto;
+        background: linear-gradient(135deg, #2563eb, #0f766e);
+        color: #fff;
+        border-bottom-right-radius: 6px;
+        box-shadow: 0 10px 24px rgba(37, 99, 235, 0.24);
+    }
+
+    .bubble.assistant {
+        background: #ffffff;
+        border: 1px solid rgba(148, 163, 184, 0.18);
+        color: #0f172a;
+        border-bottom-left-radius: 6px;
+        box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
+    }
+
+    .bubble-label {
+        font-size: 0.78rem;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        opacity: 0.75;
+        margin-bottom: 6px;
+        font-weight: 700;
+    }
+
+    .composer {
+        padding: 18px 20px 22px;
         background: #fff;
+        border-top: 1px solid rgba(148, 163, 184, 0.18);
+        border-radius: 0 0 24px 24px;
     }
 
-    .chip {
+    .support-panel {
+        padding: 22px;
+    }
+
+    .context-box {
+        border-radius: 18px;
+        background: linear-gradient(180deg, #ffffff, #f8fafc);
+        border: 1px solid rgba(148, 163, 184, 0.18);
+        padding: 18px;
+    }
+
+    .context-chip {
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        padding: 7px 12px;
         border-radius: 999px;
-        background: #e9f7ef;
-        color: #1f6f46;
-        margin: 4px;
+        background: rgba(37, 99, 235, 0.1);
+        color: #1d4ed8;
+        padding: 7px 12px;
+        margin: 4px 6px 0 0;
         font-size: 0.9rem;
-        font-weight: 500;
+        font-weight: 600;
     }
 
-    .chip button {
-        border: none;
-        background: transparent;
-        color: #1f6f46;
-        line-height: 1;
-        padding: 0;
-        font-size: 0.95rem;
+    .history-card {
+        border: 1px solid rgba(148, 163, 184, 0.16);
+        border-radius: 16px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .history-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="ai-hero">
-        <h1 class="display-4 fw-bold">
-            <i class="fas fa-robot me-3"></i>AI-Powered Consultation
-        </h1>
-        <p class="lead">Get personalized remedy recommendations based on your inputs</p>
-        <p class="mb-0 small opacity-75">
-            <i class="fas fa-key me-1"></i>OpenAI-only mode is active. Results are shown only when live OpenAI generation succeeds.
-        </p>
-    </div>
-    
-    <div class="row">
-        <div class="col-lg-8">
-            <div class="consultation-form">
-                <h3 class="mb-4">
-                    <i class="fas fa-comment-medical me-2"></i>Tell Us About Your Problem
-                </h3>
-                
-                <form method="post">
-                    {% csrf_token %}
-                    
-                    <div class="mb-4">
-                        <label for="problem_description" class="form-label">
-                            <strong>What problem are you facing?</strong>
-                        </label>
-                        <textarea 
-                            name="problem_description" 
-                            id="problem_description" 
-                            class="form-control" 
-                            rows="5" 
-                            placeholder="Describe your problem in detail (e.g., dry skin, acne, hair fall, etc.)"
-                            required
-                        >{{ problem_description|default:'' }}</textarea>
-                        <small class="text-muted">Be as specific as possible for better recommendations</small>
-                    </div>
-                    
-                    <div class="mb-4">
-                        <label for="ingredient_input" class="form-label">
-                            <strong>What ingredients do you have at home?</strong>
-                        </label>
-                        <div class="row g-2 mb-2">
-                            <div class="col-md-9">
-                                <input
-                                    type="text"
-                                    id="ingredient_input"
-                                    class="form-control"
-                                    placeholder="Type ingredient and press Enter (e.g., honey)"
-                                >
-                            </div>
-                            <div class="col-md-3 d-grid">
-                                <button type="button" id="add_ingredient_btn" class="btn btn-outline-success">
-                                    <i class="fas fa-plus me-1"></i>Add
-                                </button>
-                            </div>
-                        </div>
-
-                        <div id="chip_wrap" class="chip-wrap mb-2"></div>
-
-                        <textarea
-                            name="available_ingredients"
-                            id="available_ingredients"
-                            class="form-control d-none"
-                            rows="3"
-                            required
-                        >{{ available_ingredients|default:'' }}</textarea>
-                        <small class="text-muted">Add ingredients as chips. You can remove any chip before submitting.</small>
-                    </div>
-                    
-                    <button type="submit" class="btn btn-primary btn-lg w-100">
-                        <i class="fas fa-magic me-2"></i>Generate AI Remedy
-                    </button>
-                </form>
+<div class="container py-4">
+    <div class="consultation-hero">
+        <div class="position-relative" style="z-index: 1;">
+            <div class="d-flex flex-wrap justify-content-between align-items-end gap-3">
+                <div>
+                    <p class="text-uppercase fw-semibold mb-2" style="letter-spacing: .12em; opacity: .8;">Live AI Consultation</p>
+                    <h1 class="display-5 fw-bold mb-2"><i class="fas fa-comments me-3"></i>Talk to the assistant like ChatGPT</h1>
+                    <p class="lead mb-0" style="max-width: 780px;">Share your concern, refine the context, and continue the conversation in multiple turns. The assistant responds from the live model, not a canned remedy database.</p>
+                </div>
+                <div class="text-end">
+                    <span class="badge bg-light text-dark px-3 py-2 mb-2"><i class="fas fa-bolt me-1"></i>Live AI only</span>
+                    <div class="small opacity-75">Your chat is kept in session and can be reopened from the recent consultations list.</div>
+                </div>
             </div>
         </div>
-        
-        <div class="col-lg-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="fas fa-history me-2"></i>Recent Consultations
-                    </h5>
+    </div>
+
+    <div class="row g-4 align-items-start">
+        <div class="col-lg-8">
+            <div class="chat-panel">
+                <div class="chat-header d-flex flex-wrap justify-content-between align-items-center gap-3">
+                    <div>
+                        <div class="fw-bold fs-5"><i class="fas fa-robot me-2"></i>Consultation Chat</div>
+                        <div class="small text-white-50">Ask follow-up questions, refine symptoms, or update the ingredients you have at home.</div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-light" id="reset_chat_btn">
+                        <i class="fas fa-trash-can me-2"></i>Clear Chat
+                    </button>
                 </div>
-                <div class="card-body">
-                    {% if consultations %}
-                        {% for consultation in consultations %}
-                        <div class="history-card card mb-3">
-                            <div class="card-body">
-                                <small class="text-muted">
-                                    <i class="fas fa-calendar me-2"></i>{{ consultation.created_at|date:"M d, Y" }}
-                                </small>
-                                <p class="mb-2 mt-2"><strong>{{ consultation.problem_description|truncatewords:8 }}</strong></p>
-                                <a href="{% url 'consultation_detail' consultation.id %}" class="btn btn-sm btn-outline-primary">
-                                    View Details
-                                </a>
+
+                <div id="chat_status" class="px-4 pt-3"></div>
+
+                <div id="chat_transcript" class="chat-transcript">
+                    {% if chat_history %}
+                        {% for message in chat_history %}
+                            <div class="bubble {% if message.role == 'user' %}user{% else %}assistant{% endif %}">
+                                <div class="bubble-label">{% if message.role == 'user' %}You{% else %}Live AI{% endif %}</div>
+                                {{ message.content }}
                             </div>
-                        </div>
                         {% endfor %}
                     {% else %}
-                        <p class="text-muted text-center">
-                            <i class="fas fa-info-circle me-2"></i>No consultations yet
-                        </p>
+                        <div class="bubble assistant">
+                            <div class="bubble-label">Live AI</div>
+                            Start the consultation by saving your problem description and ingredients below, then send your first message. If you want, just type what is happening and the assistant will ask what it needs next.
+                        </div>
                     {% endif %}
                 </div>
+
+                <div class="composer">
+                    <form id="chat_form" class="mb-0">
+                        <div class="input-group">
+                            <textarea id="chat_message" class="form-control" rows="3" placeholder="Type your follow-up question or symptom details..." required></textarea>
+                            <button class="btn btn-primary px-4" id="send_message_btn" type="submit">
+                                <i class="fas fa-paper-plane me-2"></i>Send
+                            </button>
+                        </div>
+                        <div class="small text-muted mt-2">Shift+Enter for a new line. The assistant will keep context from earlier messages.</div>
+                    </form>
+                </div>
             </div>
-            
-            <div class="card mt-4">
-                <div class="card-body">
-                    <h6><i class="fas fa-lightbulb me-2 text-warning"></i>Tips for Better Results</h6>
-                    <ul class="small">
-                        <li>Be specific about your problem</li>
-                        <li>List all available ingredients</li>
-                        <li>Include any known allergies in your profile</li>
-                        <li>Follow the recommended precautions</li>
-                    </ul>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="support-panel mb-4">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h5 class="mb-0"><i class="fas fa-sliders me-2 text-primary"></i>Consultation Context</h5>
+                    {% if chat_context.problem_description or chat_context.available_ingredients %}
+                        <span class="badge bg-success-subtle text-success border border-success-subtle">Saved</span>
+                    {% endif %}
+                </div>
+
+                <form id="context_form">
+                    <div class="mb-3">
+                        <label for="problem_description" class="form-label fw-semibold">What problem are you facing?</label>
+                        <textarea id="problem_description" class="form-control" rows="4" placeholder="Dry skin, acne, hair fall, dandruff, irritation...">{{ chat_context.problem_description|default:'' }}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="available_ingredients" class="form-label fw-semibold">Ingredients available at home</label>
+                        <textarea id="available_ingredients" class="form-control" rows="4" placeholder="Honey, aloe vera, turmeric, yogurt...">{{ chat_context.available_ingredients|default:'' }}</textarea>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-outline-primary">
+                            <i class="fas fa-save me-2"></i>Update Context
+                        </button>
+                    </div>
+                </form>
+
+                {% if chat_context.problem_description or chat_context.available_ingredients %}
+                    <div class="context-box mt-4">
+                        <div class="small text-uppercase text-muted fw-semibold mb-2">Active Context</div>
+                        {% if chat_context.problem_description %}
+                            <div class="mb-2"><strong>Problem:</strong> {{ chat_context.problem_description }}</div>
+                        {% endif %}
+                        {% if chat_context.available_ingredients %}
+                            <div class="small text-muted mb-2"><strong>Ingredients:</strong></div>
+                            <div id="context_ingredients" class="d-flex flex-wrap"></div>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="support-panel mb-4">
+                <h5 class="mb-3"><i class="fas fa-history me-2 text-primary"></i>Recent Consultations</h5>
+                {% if consultations %}
+                    {% for consultation in consultations %}
+                        <div class="history-card card mb-3">
+                            <div class="card-body">
+                                <small class="text-muted d-block mb-2"><i class="fas fa-calendar me-2"></i>{{ consultation.created_at|date:"M d, Y" }}</small>
+                                <div class="fw-semibold mb-2">{{ consultation.problem_description|truncatewords:10 }}</div>
+                                <a href="{% url 'consultation_detail' consultation.id %}" class="btn btn-sm btn-outline-primary">View Details</a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted mb-0">No consultations yet.</p>
+                {% endif %}
+            </div>
+
+            <div class="support-panel">
+                <h6 class="mb-3"><i class="fas fa-lightbulb me-2 text-warning"></i>How to get better answers</h6>
+                <div class="d-flex flex-wrap">
+                    <span class="context-chip"><i class="fas fa-bullseye"></i>Describe the exact symptom</span>
+                    <span class="context-chip"><i class="fas fa-leaf"></i>List ingredients you already have</span>
+                    <span class="context-chip"><i class="fas fa-user-check"></i>Mention allergies or sensitive skin</span>
+                    <span class="context-chip"><i class="fas fa-message"></i>Ask follow-up questions naturally</span>
                 </div>
             </div>
         </div>
@@ -187,109 +273,171 @@
 {% block extra_js %}
 <script>
     (function () {
-        const ingredientInput = document.getElementById('ingredient_input');
-        const addButton = document.getElementById('add_ingredient_btn');
-        const chipWrap = document.getElementById('chip_wrap');
-        const hiddenField = document.getElementById('available_ingredients');
-        const form = hiddenField ? hiddenField.closest('form') : null;
+        const chatForm = document.getElementById('chat_form');
+        const chatMessage = document.getElementById('chat_message');
+        const chatTranscript = document.getElementById('chat_transcript');
+        const chatStatus = document.getElementById('chat_status');
+        const contextForm = document.getElementById('context_form');
+        const problemDescription = document.getElementById('problem_description');
+        const availableIngredients = document.getElementById('available_ingredients');
+        const resetButton = document.getElementById('reset_chat_btn');
+        const contextIngredients = document.getElementById('context_ingredients');
+        const sendButton = document.getElementById('send_message_btn');
 
-        if (!ingredientInput || !addButton || !chipWrap || !hiddenField || !form) {
+        if (!chatForm || !chatMessage || !chatTranscript || !chatStatus || !contextForm || !problemDescription || !availableIngredients || !resetButton || !sendButton) {
             return;
         }
 
-        const ingredients = [];
+        const csrfToken = (() => {
+            const match = document.cookie.match(/(?:^|; )csrftoken=([^;]+)/);
+            return match ? decodeURIComponent(match[1]) : '';
+        })();
 
-        const normalize = (value) => value.trim().replace(/\s+/g, ' ');
-
-        const syncHiddenField = () => {
-            hiddenField.value = ingredients.join(', ');
+        const scrollToBottom = () => {
+            chatTranscript.scrollTop = chatTranscript.scrollHeight;
         };
 
-        const renderChips = () => {
-            chipWrap.innerHTML = '';
+        const setStatus = (message, kind = 'info') => {
+            chatStatus.innerHTML = message ? `<div class="alert alert-${kind} py-2 mb-0">${message}</div>` : '';
+        };
 
-            if (!ingredients.length) {
-                const empty = document.createElement('span');
-                empty.className = 'text-muted small';
-                empty.textContent = 'No ingredients added yet.';
-                chipWrap.appendChild(empty);
+        const appendBubble = (role, text) => {
+            const bubble = document.createElement('div');
+            bubble.className = `bubble ${role === 'user' ? 'user' : 'assistant'}`;
+
+            const label = document.createElement('div');
+            label.className = 'bubble-label';
+            label.textContent = role === 'user' ? 'You' : 'Live AI';
+
+            const content = document.createElement('div');
+            content.textContent = text;
+
+            bubble.appendChild(label);
+            bubble.appendChild(content);
+            chatTranscript.appendChild(bubble);
+            scrollToBottom();
+        };
+
+        const renderContextIngredients = () => {
+            if (!contextIngredients) {
                 return;
             }
 
-            ingredients.forEach((ingredient, index) => {
+            const raw = availableIngredients.value.trim();
+            const items = raw ? raw.split(/[,\n;]+/).map(item => item.trim()).filter(Boolean) : [];
+            contextIngredients.innerHTML = '';
+
+            if (!items.length) {
+                contextIngredients.innerHTML = '<span class="text-muted small">No ingredients added yet.</span>';
+                return;
+            }
+
+            items.forEach(item => {
                 const chip = document.createElement('span');
-                chip.className = 'chip';
-                chip.innerHTML = `${ingredient}<button type="button" aria-label="Remove ingredient" data-index="${index}"><i class="fas fa-times"></i></button>`;
-                chipWrap.appendChild(chip);
+                chip.className = 'context-chip';
+                chip.textContent = item;
+                contextIngredients.appendChild(chip);
             });
         };
 
-        const addIngredient = () => {
-            const raw = ingredientInput.value;
-            const value = normalize(raw);
-            if (!value) {
-                return;
-            }
+        const postForm = async (payload) => {
+            const formData = new FormData();
+            Object.entries(payload).forEach(([key, value]) => formData.append(key, value));
 
-            const exists = ingredients.some(item => item.toLowerCase() === value.toLowerCase());
-            if (!exists) {
-                ingredients.push(value);
-                syncHiddenField();
-                renderChips();
-            }
+            const response = await fetch(window.location.pathname, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                },
+                body: formData,
+            });
 
-            ingredientInput.value = '';
-            ingredientInput.focus();
+            return response.json();
         };
 
-        addButton.addEventListener('click', addIngredient);
+        contextForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            setStatus('Saving consultation context...', 'secondary');
 
-        ingredientInput.addEventListener('keydown', (event) => {
-            if (event.key === 'Enter') {
-                event.preventDefault();
-                addIngredient();
+            try {
+                const result = await postForm({
+                    action: 'context',
+                    problem_description: problemDescription.value,
+                    available_ingredients: availableIngredients.value,
+                });
+
+                if (!result.ok) {
+                    throw new Error(result.error || 'Unable to update the consultation context.');
+                }
+
+                renderContextIngredients();
+                setStatus('Context updated. Send your next message to continue the consultation.', 'success');
+                setTimeout(() => setStatus('', 'info'), 3500);
+            } catch (error) {
+                setStatus(error.message || 'Unable to update the consultation context.', 'danger');
             }
         });
 
-        chipWrap.addEventListener('click', (event) => {
-            const button = event.target.closest('button[data-index]');
-            if (!button) {
+        chatForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const message = chatMessage.value.trim();
+            if (!message) {
                 return;
             }
-            const index = Number(button.dataset.index);
-            if (!Number.isNaN(index)) {
-                ingredients.splice(index, 1);
-                syncHiddenField();
-                renderChips();
+
+            appendBubble('user', message);
+            chatMessage.value = '';
+            chatMessage.focus();
+            sendButton.disabled = true;
+            setStatus('Live AI is thinking...', 'secondary');
+
+            try {
+                const result = await postForm({
+                    action: 'message',
+                    message,
+                });
+
+                if (!result.ok) {
+                    throw new Error(result.error || 'The live AI service did not return a usable reply.');
+                }
+
+                appendBubble('assistant', result.assistant || 'The live AI service returned an empty response.');
+                setStatus('Reply generated successfully.', 'success');
+                setTimeout(() => setStatus('', 'info'), 3000);
+            } catch (error) {
+                appendBubble('assistant', error.message || 'The live AI service did not return a usable reply.');
+                setStatus(error.message || 'The live AI service did not return a usable reply.', 'danger');
+            } finally {
+                sendButton.disabled = false;
             }
         });
 
-        form.addEventListener('submit', (event) => {
-            addIngredient();
-            syncHiddenField();
-            if (!hiddenField.value.trim()) {
-                event.preventDefault();
-                ingredientInput.focus();
-                alert('Please add at least one ingredient.');
+        resetButton.addEventListener('click', async () => {
+            const confirmed = window.confirm('Clear the current chat? This will remove the session history from the page.');
+            if (!confirmed) {
+                return;
+            }
+
+            try {
+                const result = await postForm({ action: 'reset' });
+                if (!result.ok) {
+                    throw new Error('Unable to clear the chat.');
+                }
+
+                chatTranscript.innerHTML = '';
+                appendBubble('assistant', 'Chat cleared. Add context again and start a new conversation.');
+                setStatus('Chat cleared.', 'success');
+                setTimeout(() => setStatus('', 'info'), 2500);
+            } catch (error) {
+                setStatus(error.message || 'Unable to clear the chat.', 'danger');
             }
         });
 
-        const initialValue = hiddenField.value.trim();
-        if (initialValue) {
-            initialValue.split(',').forEach((item) => {
-                const value = normalize(item);
-                if (!value) {
-                    return;
-                }
-                const exists = ingredients.some(existing => existing.toLowerCase() === value.toLowerCase());
-                if (!exists) {
-                    ingredients.push(value);
-                }
-            });
-            syncHiddenField();
-        }
-
-        renderChips();
+        availableIngredients.addEventListener('input', renderContextIngredients);
+        renderContextIngredients();
+        scrollToBottom();
     })();
 </script>
 {% endblock %}

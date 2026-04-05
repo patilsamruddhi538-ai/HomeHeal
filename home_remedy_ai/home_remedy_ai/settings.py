@@ -155,9 +155,11 @@ LOGOUT_REDIRECT_URL = 'home'
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Optional AI provider settings for dynamic consultations
-OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', '')
-OPENAI_MODEL = os.getenv('OPENAI_MODEL', 'gpt-4o-mini')
-OPENAI_BASE_URL = os.getenv('OPENAI_BASE_URL', 'https://api.openai.com/v1/chat/completions')
-OPENAI_TIMEOUT = int(os.getenv('OPENAI_TIMEOUT', '25'))
-OPENAI_ALLOW_FALLBACK = os.getenv('OPENAI_ALLOW_FALLBACK', '0').lower() in {'1', 'true', 'yes'}
+# Optional live AI provider settings for dynamic consultations
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', os.getenv('GOOGLE_API_KEY', os.getenv('OPENAI_API_KEY', '')))
+GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-1.5-flash')
+GEMINI_BASE_URL = os.getenv(
+    'GEMINI_BASE_URL',
+    f'https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent'
+)
+AI_TIMEOUT = int(os.getenv('AI_TIMEOUT', '25'))

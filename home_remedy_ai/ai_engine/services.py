@@ -168,6 +168,27 @@ def generate_ai_remedy(problem_description, available_ingredients, user):
     return json.dumps(sections)
 
 
+def generate_ai_chat_reply(user_message, conversation_history, user, consultation_context=None):
+    """Generate a conversational live AI reply for the consultation chat."""
+    profile = _extract_profile(user)
+    reply_payload, failure_reason = _generate_with_live_chat(
+        user_message=user_message,
+        conversation_history=conversation_history,
+        profile=profile,
+        consultation_context=consultation_context or {},
+    )
+
+    if reply_payload:
+        reply_payload["generation_source"] = "live_chat"
+        return reply_payload
+
+    return {
+        "reply": _live_ai_unavailable_reply(failure_reason),
+        "generation_source": "unavailable",
+        "failure_reason": failure_reason or "unknown",
+    }
+
+
 def parse_ai_remedy_payload(payload_text):
     """Convert stored remedy payload to a normalized section dictionary for templates."""
     if not payload_text:
@@ -188,21 +209,12 @@ def generate_ai_remedy_sections(problem_description, available_ingredients, user
     """Generate consultation in a section-wise format."""
     profile = _extract_profile(user)
     ingredient_names = _parse_ingredients(available_ingredients)
-    allow_local_fallback = bool(getattr(settings, "OPENAI_ALLOW_FALLBACK", False))
 
-    ai_payload, failure_reason = _generate_with_openai(problem_description, ingredient_names, profile)
+    ai_payload, failure_reason = _generate_with_live_ai(problem_description, ingredient_names, profile)
     if ai_payload:
-        ai_payload["generation_source"] = "openai"
+        ai_payload["generation_source"] = "live_ai"
         return _normalize_sections(ai_payload)
 
-    if allow_local_fallback:
-        # Optional fallback mode for development/testing.
-        fallback_payload = _generate_rule_based(problem_description, ingredient_names, profile)
-        fallback_payload["generation_source"] = "rule_based"
-        fallback_payload["failure_reason"] = failure_reason or "unknown"
-        return _normalize_sections(fallback_payload)
-
-    # OpenAI-only mode: do not return generated local replacement content.
     return _build_unavailable_sections(problem_description, ingredient_names, failure_reason)
 
 
@@ -231,21 +243,24 @@ def _parse_ingredients(available_ingredients):
 
 def _build_unavailable_sections(problem_description, ingredient_names, failure_reason):
     reason_text = {
-        "missing_api_key": "OPENAI_API_KEY is not configured in environment variables.",
-        "http_error": "AI API request failed due to an HTTP/network issue.",
-        "invalid_response": "AI API returned an unexpected response format.",
-    }.get(failure_reason, "AI generation is currently unavailable.")
+        "missing_api_key": "GEMINI_API_KEY is not configured in environment variables.",
+        "invalid_api_key": "The live AI API key was rejected.",
+        "rate_limited": "The live AI API rate limit was reached.",
+        "network_error": "A network issue occurred while contacting the live AI API.",
+        "http_error": "The live AI API request failed with an HTTP error.",
+        "invalid_response": "The live AI API returned an unexpected response format.",
+    }.get(failure_reason, "Live AI generation is currently unavailable.")
 
     ingredients_line = ", ".join(ingredient_names) if ingredient_names else "Not provided"
 
     return _normalize_sections(
         {
-            "title": "Real AI Response Unavailable",
-            "description": "This consultation is configured for live AI generation only.",
+            "title": "Live AI Response Unavailable",
+            "description": "This consultation is configured for live model generation only.",
             "matched_problem": "Pending AI Analysis",
             "ingredients": [f"Provided by user: {ingredients_line}"],
             "instructions": [
-                "Set OPENAI_API_KEY in your environment.",
+                "Set GEMINI_API_KEY in your environment.",
                 "Restart the Django server after setting environment variables.",
                 "Submit the consultation again to get a real model response.",
             ],
@@ -266,6 +281,17 @@ def _build_unavailable_sections(problem_description, ingredient_names, failure_r
             "problem_echo": problem_description,
         }
     )
+
+
+def _live_ai_unavailable_reply(failure_reason):
+    return {
+        "missing_api_key": "I could not start the live AI chat because the API key is missing. Set GEMINI_API_KEY and try again.",
+        "invalid_api_key": "I could not authenticate with the live AI service. Check the API key and try again.",
+        "rate_limited": "The live AI service is rate limited right now. Please try again shortly.",
+        "network_error": "I could not reach the live AI service because of a network issue.",
+        "http_error": "The live AI service returned an unexpected HTTP error.",
+        "invalid_response": "The live AI service returned an invalid response format.",
+    }.get(failure_reason, "The live AI service is currently unavailable.")
 
 
 def _detect_problem_profile(problem_description):
@@ -400,47 +426,51 @@ def _generate_rule_based(problem_description, ingredient_tokens, profile):
     }
 
 
-def _generate_with_openai(problem_description, ingredient_names, profile):
-    api_key = getattr(settings, "OPENAI_API_KEY", "").strip()
+def _generate_with_live_ai(problem_description, ingredient_names, profile):
+    api_key = getattr(settings, "GEMINI_API_KEY", "").strip()
     if not api_key:
         return None, "missing_api_key"
 
-    model = getattr(settings, "OPENAI_MODEL", "gpt-4o-mini")
-    api_url = getattr(settings, "OPENAI_BASE_URL", "https://api.openai.com/v1/chat/completions")
-    timeout = int(getattr(settings, "OPENAI_TIMEOUT", 25) or 25)
+    model = getattr(settings, "GEMINI_MODEL", "gemini-1.5-flash")
+    api_url = getattr(
+        settings,
+        "GEMINI_BASE_URL",
+        f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
+    )
+    timeout = int(getattr(settings, "AI_TIMEOUT", 25) or 25)
+    system_prompt = (
+        "You are a careful home remedy assistant. Respond ONLY as valid JSON with keys: "
+        "title, description, matched_problem, ingredients (array), instructions (array), usage, "
+        "benefits (array), chemicals, reactions, importance, precautions (array). "
+        "Do not cite any hardcoded remedy database. Use only the user's description, their ingredients, "
+        "and general safe AI reasoning. Avoid medical diagnosis and include safe caution advice."
+    )
+    user_prompt = json.dumps(
+        {
+            "problem_description": problem_description,
+            "available_ingredients": ingredient_names,
+            "profile": profile,
+        }
+    )
     payload = {
-        "model": model,
-        "temperature": 0.4,
-        "response_format": {"type": "json_object"},
-        "messages": [
-            {
-                "role": "system",
-                "content": (
-                    "You are a careful home remedy assistant. Respond ONLY as valid JSON with keys: "
-                    "title, description, matched_problem, ingredients (array), instructions (array), usage, "
-                    "benefits (array), chemicals, reactions, importance, precautions (array). "
-                    "Avoid medical diagnosis and include safe caution advice."
-                ),
-            },
+        "systemInstruction": {"parts": [{"text": system_prompt}]},
+        "contents": [
             {
                 "role": "user",
-                "content": json.dumps(
-                    {
-                        "problem_description": problem_description,
-                        "available_ingredients": ingredient_names,
-                        "profile": profile,
-                    }
-                ),
-            },
+                "parts": [{"text": user_prompt}],
+            }
         ],
+        "generationConfig": {
+            "temperature": 0.5,
+            "responseMimeType": "application/json",
+        },
     }
 
     req = request.Request(
-        url=api_url,
+        url=f"{api_url}?key={api_key}",
         data=json.dumps(payload).encode("utf-8"),
         headers={
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {api_key}",
         },
         method="POST",
     )
@@ -460,13 +490,143 @@ def _generate_with_openai(problem_description, ingredient_names, profile):
         return None, "http_error"
 
     try:
-        content = data["choices"][0]["message"]["content"]
+        content = _extract_live_ai_text(data)
         parsed = json.loads(content)
         if isinstance(parsed, dict):
             return parsed, None
         return None, "invalid_response"
     except (KeyError, IndexError, TypeError, json.JSONDecodeError):
         return None, "invalid_response"
+
+
+def _generate_with_live_chat(user_message, conversation_history, profile, consultation_context):
+    api_key = getattr(settings, "GEMINI_API_KEY", "").strip()
+    if not api_key:
+        return None, "missing_api_key"
+
+    model = getattr(settings, "GEMINI_MODEL", "gemini-1.5-flash")
+    api_url = getattr(
+        settings,
+        "GEMINI_BASE_URL",
+        f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
+    )
+    timeout = int(getattr(settings, "AI_TIMEOUT", 25) or 25)
+    system_prompt = (
+        "You are HomeHeal, a live AI home-remedy consultation assistant. Hold a natural multi-turn conversation. "
+        "Use the chat history and the user's consultation context. Do not mention internal databases, rule-based content, "
+        "or fallback logic. Do not base the answer on any pre-fed remedy library. Reason from the user's symptoms, "
+        "available ingredients, profile, and conversation. If important details are missing, ask one focused follow-up "
+        "question before giving a final recommendation. Keep replies concise but useful. Always include safety guidance "
+        "when symptoms are severe, persistent, unusual, or involve broken skin. Respond as valid JSON with keys: "
+        "reply, matched_problem, next_question, safety_note, follow_up_needed."
+    )
+
+    request_contents = []
+    if consultation_context:
+        request_contents.append(
+            {
+                "role": "user",
+                "parts": [
+                    {
+                        "text": "Consultation context: " + json.dumps(
+                            {
+                                "consultation_context": consultation_context,
+                                "profile": profile,
+                            }
+                        ),
+                    }
+                ],
+            }
+        )
+
+    for item in conversation_history[-16:]:
+        role = "model" if item.get("role") in {"assistant", "model"} else "user"
+        content = str(item.get("content") or item.get("text") or "").strip()
+        if not content:
+            continue
+        request_contents.append(
+            {
+                "role": role,
+                "parts": [{"text": content}],
+            }
+        )
+
+    request_contents.append(
+        {
+            "role": "user",
+            "parts": [{"text": str(user_message).strip()}],
+        }
+    )
+
+    payload = {
+        "systemInstruction": {"parts": [{"text": system_prompt}]},
+        "contents": request_contents,
+        "generationConfig": {
+            "temperature": 0.7,
+            "responseMimeType": "application/json",
+        },
+    }
+
+    req = request.Request(
+        url=f"{api_url}?key={api_key}",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={
+            "Content-Type": "application/json",
+        },
+        method="POST",
+    )
+
+    try:
+        with request.urlopen(req, timeout=timeout) as response:
+            data = json.loads(response.read().decode("utf-8"))
+    except error.HTTPError as exc:
+        if exc.code in {401, 403}:
+            return None, "invalid_api_key"
+        if exc.code == 429:
+            return None, "rate_limited"
+        return None, "http_error"
+    except (error.URLError, TimeoutError):
+        return None, "network_error"
+    except json.JSONDecodeError:
+        return None, "http_error"
+
+    try:
+        content = _extract_live_ai_text(data)
+        if not content:
+            return None, "invalid_response"
+
+        parsed = json.loads(content)
+        if isinstance(parsed, dict):
+            reply_text = str(parsed.get("reply") or parsed.get("response") or "").strip()
+            if not reply_text:
+                reply_text = content.strip()
+            return {
+                "reply": reply_text,
+                "matched_problem": str(parsed.get("matched_problem") or ""),
+                "next_question": str(parsed.get("next_question") or ""),
+                "safety_note": str(parsed.get("safety_note") or ""),
+                "follow_up_needed": bool(parsed.get("follow_up_needed")),
+            }, None
+
+        return {"reply": content.strip()}, None
+    except (KeyError, IndexError, TypeError, json.JSONDecodeError):
+        text = _extract_live_ai_text(data).strip()
+        if text:
+            return {"reply": text}, None
+        return None, "invalid_response"
+
+
+def _extract_live_ai_text(data):
+    candidates = data.get("candidates") or []
+    for candidate in candidates:
+        content = candidate.get("content") or {}
+        parts = content.get("parts") or []
+        for part in parts:
+            text = part.get("text")
+            if text:
+                return text.strip()
+
+    return ""
 
 
 def _normalize_sections(data):
@@ -485,6 +645,12 @@ def _normalize_sections(data):
         "generation_source": str(data.get("generation_source") or "unavailable"),
         "failure_reason": str(data.get("failure_reason") or ""),
         "problem_echo": str(data.get("problem_echo") or ""),
+        "reply": str(data.get("reply") or ""),
+        "next_question": str(data.get("next_question") or ""),
+        "safety_note": str(data.get("safety_note") or ""),
+        "follow_up_needed": bool(data.get("follow_up_needed")),
+        "conversation": _safe_conversation_list(data.get("conversation")),
+        "consultation_context": _safe_dict(data.get("consultation_context")),
     }
 
 
@@ -495,6 +661,29 @@ def _safe_list(value):
         lines = [item.strip("-• ").strip() for item in value.splitlines() if item.strip()]
         return lines
     return []
+
+
+def _safe_dict(value):
+    if isinstance(value, dict):
+        return {str(key): value[key] for key in value}
+    return {}
+
+
+def _safe_conversation_list(value):
+    if not isinstance(value, list):
+        return []
+
+    conversation = []
+    for item in value:
+        if not isinstance(item, dict):
+            continue
+        role = str(item.get("role") or "").strip().lower()
+        content = str(item.get("content") or item.get("text") or "").strip()
+        if role not in {"user", "assistant", "model"} or not content:
+            continue
+        conversation.append({"role": "assistant" if role == "model" else role, "content": content})
+
+    return conversation
 
 
 def _dedupe_list(items):
