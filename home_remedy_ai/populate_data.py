@@ -44,7 +44,7 @@ categories_data = [
 
 categories = {}
 for cat_data in categories_data:
-    category, created = Category.objects.get_or_create(
+    category, created = Category.objects.update_or_create(
         slug=slugify(cat_data['name']),
         defaults={
             'name': cat_data['name'],
@@ -53,7 +53,7 @@ for cat_data in categories_data:
         }
     )
     categories[cat_data['name']] = category
-    print(f"{'Created' if created else 'Found'} category: {category.name}")
+    print(f"{'Created' if created else 'Updated'} category: {category.name}")
 
 # Create Problems
 problems_data = [
