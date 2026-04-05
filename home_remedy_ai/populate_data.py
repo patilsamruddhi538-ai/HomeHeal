@@ -38,7 +38,7 @@ categories_data = [
     {
         'name': 'Women\'s Health',
         'description': 'Covers common health concerns related to women, including hormonal balance, menstrual health, and overall wellness',
-        'icon': 'fa-woman'
+        'icon': 'fa-venus'
     },
 ]
 

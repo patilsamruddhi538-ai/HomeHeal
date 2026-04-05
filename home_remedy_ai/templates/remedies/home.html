@@ -97,12 +97,8 @@
                 <div class="card category-card">
                     <div class="card-body text-center p-5">
                         <div class="category-icon mb-3">
-                            {% if 'skin' in category.name.lower %}
-                                <i class="fas fa-spa"></i>
-                            {% elif 'hair' in category.name.lower %}
-                                <i class="fas fa-cut"></i>
-                            {% elif 'body' in category.name.lower %}
-                                <i class="fas fa-heart"></i>
+                            {% if category.icon %}
+                                <i class="fas {{ category.icon }}"></i>
                             {% else %}
                                 <i class="fas fa-leaf"></i>
                             {% endif %}
