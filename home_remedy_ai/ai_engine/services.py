@@ -22,44 +22,42 @@ def generate_ai_remedy(problem_description, available_ingredients, user):
     
     # Create a comprehensive remedy based on common natural ingredients
     remedy_template = f"""
-🌿 **Personalized Home Remedy for {user.first_name or user.username}**
+🌿 Personalized Home Remedy for {user.first_name or user.username}
 
-**Your Problem:** {problem_description}
+😣 Your Problem:{problem_description}
 
-**Available Ingredients:** {available_ingredients}
+🧐 Available Ingredients:{available_ingredients}
 
-**Your Profile:**
-- Skin Type: {skin_type}
-- Known Allergies: {allergies}
+Your Profile:
+🙍‍♀️🙍‍♂️ Skin Type: {skin_type}
+      Known Allergies: {allergies}
 
----
-
-**RECOMMENDED REMEDY:**
+🤔 RECOMMENDED REMEDY:
 
 Based on your available ingredients and profile, here's a customized natural remedy:
 
-**Ingredients Needed:**
+Ingredients Needed:
 {_generate_ingredient_list(available_ingredients)}
 
-**Preparation Instructions:**
+Preparation Instructions:
 {_generate_instructions(problem_description, available_ingredients)}
 
-**How to Use:**
+How to Use:
 {_generate_usage(problem_description)}
 
-**Benefits:**
+Benefits:
 {_generate_benefits(problem_description, available_ingredients)}
 
-**Active Compounds & How They Work:**
+Active Compounds & How They Work:
 {_generate_chemical_info(available_ingredients)}
 
-**Precautions:**
+Precautions:
 {_generate_precautions(skin_type, allergies)}
 
-**Expected Results:**
+Expected Results:
 You should notice improvements within 1-2 weeks with regular use. If symptoms persist or worsen, please consult a healthcare professional.
 
-**Additional Tips:**
+Additional Tips:
 - Patch test on a small area before full application
 - Store any leftover mixture in refrigerator for up to 3 days
 - Best results when used consistently
@@ -109,14 +107,14 @@ def _generate_ingredient_list(ingredients_str):
 def _generate_instructions(problem, ingredients):
     """Generate step-by-step instructions"""
     instructions = """
-1. **Prepare your workspace:** Clean and sanitize a small bowl and mixing spoon
-2. **Mix ingredients:** Combine all ingredients in the bowl and mix until smooth and well-blended
-3. **Test consistency:** The mixture should be paste-like and easy to apply
-4. **Cleanse:** Wash the affected area with lukewarm water and pat dry
-5. **Apply:** Gently apply the mixture evenly using clean hands or a brush
-6. **Wait:** Leave on for 15-20 minutes, or until it dries
-7. **Rinse:** Remove with lukewarm water using gentle circular motions
-8. **Moisturize:** Pat dry and apply a light moisturizer if needed
+1. 🧼 Prepare your workspace: Clean and sanitize a small bowl and mixing spoon
+2. 🥣 Mix ingredients: Combine everything in the bowl and stir until smooth
+3. ✅ Test consistency: The mixture should feel paste-like and easy to spread
+4. 🚿 Cleanse: Wash the affected area with lukewarm water and pat dry
+5. 🖌️ Apply: Gently spread the mixture evenly using clean hands or a brush
+6. ⏳ Wait: Leave it on for 15-20 minutes, or until it dries
+7. 💧 Rinse: Remove with lukewarm water using gentle circular motions
+8. 🧴 Moisturize: Pat dry and apply a light moisturizer if needed
 """
     return instructions
 
@@ -172,15 +170,15 @@ def _generate_benefits(problem, ingredients):
 def _generate_chemical_info(ingredients):
     """Generate information about active compounds"""
     compound_info = """
-**Natural Active Compounds:**
+🧪 Natural Active Compounds:
 
-• **Antioxidants:** Fight free radicals and prevent aging
-• **Vitamins (A, C, E):** Promote healing and collagen production
-• **Essential Fatty Acids:** Nourish and repair skin barrier
-• **Natural Acids (Lactic, Citric):** Gentle exfoliation and brightening
-• **Enzymes:** Break down dead skin cells and impurities
-• **Anti-inflammatory Compounds:** Reduce redness and irritation
-• **Antimicrobial Agents:** Fight bacteria and prevent infection
+• 🛡️ Antioxidants: Fight free radicals and help reduce early aging signs
+• 🍊 Vitamins (A, C, E): Support healing and collagen production
+• 🧈 Essential Fatty Acids: Nourish and repair the skin barrier
+• 🍋 Natural Acids (Lactic, Citric): Provide gentle exfoliation and brightening
+• 🧬 Enzymes: Help remove dead skin cells and buildup
+• 🌿 Anti-inflammatory Compounds: Calm redness and irritation
+• 🧫 Antimicrobial Agents: Help fight bacteria and reduce infection risk
 
 These compounds work synergistically to address your concern naturally and effectively.
 """
@@ -190,7 +188,7 @@ These compounds work synergistically to address your concern naturally and effec
 def _generate_precautions(skin_type, allergies):
     """Generate safety precautions"""
     precautions = f"""
-⚠️ **Important Safety Information:**
+⚠️ Important Safety Information:
 
 • Always perform a patch test 24 hours before full application
 • Avoid contact with eyes - rinse immediately if contact occurs
