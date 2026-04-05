@@ -117,6 +117,28 @@ def ai_consultation(request):
             # Generate AI remedy
             ai_remedy = generate_ai_remedy(problem_description, available_ingredients, request.user)
             parsed_remedy = parse_ai_remedy_payload(ai_remedy)
+
+            if parsed_remedy.get('generation_source') != 'openai':
+                reason = parsed_remedy.get('failure_reason', '')
+                reason_hint = {
+                    'missing_api_key': 'OPENAI_API_KEY is not set.',
+                    'invalid_api_key': 'OPENAI_API_KEY is invalid or expired.',
+                    'rate_limited': 'OpenAI quota or rate limit was reached.',
+                    'network_error': 'Network issue while contacting OpenAI.',
+                    'http_error': 'OpenAI API returned an unexpected error.',
+                    'invalid_response': 'OpenAI response format was not valid JSON.',
+                }.get(reason, 'OpenAI is temporarily unavailable.')
+                messages.error(
+                    request,
+                    f'Consultation was not saved because OpenAI-only mode is enabled. {reason_hint}'
+                )
+                consultations = AIConsultation.objects.filter(user=request.user)[:5]
+                context = {
+                    'consultations': consultations,
+                    'problem_description': problem_description,
+                    'available_ingredients': available_ingredients,
+                }
+                return render(request, 'remedies/ai_consultation.html', context)
             
             # Save consultation
             consultation = AIConsultation.objects.create(
@@ -126,22 +148,7 @@ def ai_consultation(request):
                 suggested_remedy=ai_remedy
             )
 
-            if parsed_remedy.get('generation_source') == 'rule_based':
-                reason = parsed_remedy.get('failure_reason', '')
-                reason_hint = {
-                    'missing_api_key': 'OPENAI_API_KEY is not set.',
-                    'invalid_api_key': 'OPENAI_API_KEY looks invalid or expired.',
-                    'rate_limited': 'OpenAI quota or rate limit was reached.',
-                    'network_error': 'Network issue while contacting OpenAI.',
-                    'http_error': 'OpenAI API returned an unexpected error.',
-                    'invalid_response': 'OpenAI response format was not valid JSON.',
-                }.get(reason, 'OpenAI was temporarily unavailable.')
-                messages.warning(
-                    request,
-                    f'Consultation generated in smart fallback mode. {reason_hint}'
-                )
-            else:
-                messages.success(request, 'AI consultation completed!')
+            messages.success(request, 'OpenAI consultation completed!')
             return redirect('consultation_detail', consultation_id=consultation.id)
         else:
             messages.error(request, 'Please provide both problem description and available ingredients.')

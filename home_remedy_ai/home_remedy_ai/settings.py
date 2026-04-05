@@ -160,3 +160,4 @@ OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', '')
 OPENAI_MODEL = os.getenv('OPENAI_MODEL', 'gpt-4o-mini')
 OPENAI_BASE_URL = os.getenv('OPENAI_BASE_URL', 'https://api.openai.com/v1/chat/completions')
 OPENAI_TIMEOUT = int(os.getenv('OPENAI_TIMEOUT', '25'))
+OPENAI_ALLOW_FALLBACK = os.getenv('OPENAI_ALLOW_FALLBACK', '0').lower() in {'1', 'true', 'yes'}

@@ -188,17 +188,22 @@ def generate_ai_remedy_sections(problem_description, available_ingredients, user
     """Generate consultation in a section-wise format."""
     profile = _extract_profile(user)
     ingredient_names = _parse_ingredients(available_ingredients)
+    allow_local_fallback = bool(getattr(settings, "OPENAI_ALLOW_FALLBACK", False))
 
     ai_payload, failure_reason = _generate_with_openai(problem_description, ingredient_names, profile)
     if ai_payload:
         ai_payload["generation_source"] = "openai"
         return _normalize_sections(ai_payload)
 
-    # Fall back to local rule-based generation so users still get usable guidance.
-    fallback_payload = _generate_rule_based(problem_description, ingredient_names, profile)
-    fallback_payload["generation_source"] = "rule_based"
-    fallback_payload["failure_reason"] = failure_reason or "unknown"
-    return _normalize_sections(fallback_payload)
+    if allow_local_fallback:
+        # Optional fallback mode for development/testing.
+        fallback_payload = _generate_rule_based(problem_description, ingredient_names, profile)
+        fallback_payload["generation_source"] = "rule_based"
+        fallback_payload["failure_reason"] = failure_reason or "unknown"
+        return _normalize_sections(fallback_payload)
+
+    # OpenAI-only mode: do not return generated local replacement content.
+    return _build_unavailable_sections(problem_description, ingredient_names, failure_reason)
 
 
 def _extract_profile(user):
