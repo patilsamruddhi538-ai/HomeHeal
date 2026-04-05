@@ -194,7 +194,11 @@ def generate_ai_remedy_sections(problem_description, available_ingredients, user
         ai_payload["generation_source"] = "openai"
         return _normalize_sections(ai_payload)
 
-    return _build_unavailable_sections(problem_description, ingredient_names, failure_reason)
+    # Fall back to local rule-based generation so users still get usable guidance.
+    fallback_payload = _generate_rule_based(problem_description, ingredient_names, profile)
+    fallback_payload["generation_source"] = "rule_based"
+    fallback_payload["failure_reason"] = failure_reason or "unknown"
+    return _normalize_sections(fallback_payload)
 
 
 def _extract_profile(user):
@@ -397,6 +401,8 @@ def _generate_with_openai(problem_description, ingredient_names, profile):
         return None, "missing_api_key"
 
     model = getattr(settings, "OPENAI_MODEL", "gpt-4o-mini")
+    api_url = getattr(settings, "OPENAI_BASE_URL", "https://api.openai.com/v1/chat/completions")
+    timeout = int(getattr(settings, "OPENAI_TIMEOUT", 25) or 25)
     payload = {
         "model": model,
         "temperature": 0.4,
@@ -425,7 +431,7 @@ def _generate_with_openai(problem_description, ingredient_names, profile):
     }
 
     req = request.Request(
-        url="https://api.openai.com/v1/chat/completions",
+        url=api_url,
         data=json.dumps(payload).encode("utf-8"),
         headers={
             "Content-Type": "application/json",
@@ -435,9 +441,17 @@ def _generate_with_openai(problem_description, ingredient_names, profile):
     )
 
     try:
-        with request.urlopen(req, timeout=25) as response:
+        with request.urlopen(req, timeout=timeout) as response:
             data = json.loads(response.read().decode("utf-8"))
-    except (error.URLError, error.HTTPError, TimeoutError, json.JSONDecodeError):
+    except error.HTTPError as exc:
+        if exc.code in {401, 403}:
+            return None, "invalid_api_key"
+        if exc.code == 429:
+            return None, "rate_limited"
+        return None, "http_error"
+    except (error.URLError, TimeoutError):
+        return None, "network_error"
+    except json.JSONDecodeError:
         return None, "http_error"
 
     try:

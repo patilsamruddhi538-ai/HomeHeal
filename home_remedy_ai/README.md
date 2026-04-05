@@ -44,7 +44,7 @@ A comprehensive Django web application for discovering, sharing, and getting AI-
   - Bootstrap 5 for responsive design
   - Font Awesome for icons
   - Google Fonts (Poppins)
-- **AI Engine**: Template-based smart matching (ready for OpenAI integration)
+- **AI Engine**: Live OpenAI integration with automatic smart fallback
 
 ## Installation & Setup
 
@@ -103,6 +103,26 @@ This will create:
 ```bash
 python manage.py runserver
 ```
+
+### Optional: Enable Real OpenAI Responses
+
+1. Create a local env file in the project root:
+
+```bash
+copy .env.example .env
+```
+
+2. Open `.env` and set your real key:
+
+```env
+OPENAI_API_KEY=your_real_openai_api_key
+OPENAI_MODEL=gpt-4o-mini
+OPENAI_TIMEOUT=25
+```
+
+3. Restart Django server after updating `.env`.
+
+If key is missing or invalid, consultations still work using smart local fallback mode.
 
 ### Step 8: Access the Application
 
@@ -205,7 +225,7 @@ Remedy.objects.create(
 
 ## AI Consultation System
 
-The AI consultation feature uses an intelligent template-based system that:
+The AI consultation feature first attempts a real OpenAI call and then falls back to local smart generation if needed:
 
 1. Analyzes the user's problem description
 2. Matches available ingredients with known remedies
@@ -217,26 +237,7 @@ The AI consultation feature uses an intelligent template-based system that:
    - Benefits and active compounds
    - Personalized precautions
 
-### Future Enhancement: OpenAI Integration
-
-To integrate real AI (OpenAI GPT), update `ai_engine/services.py`:
-
-```python
-import openai
-
-def generate_ai_remedy_with_api(problem, ingredients, user):
-    openai.api_key = 'your-api-key'
-    
-    response = openai.ChatCompletion.create(
-        model="gpt-4",
-        messages=[{
-            "role": "user",
-            "content": f"Create a home remedy for {problem} using {ingredients}"
-        }]
-    )
-    
-    return response.choices[0].message.content
-```
+Fallback mode ensures users can still submit and receive guidance even during missing key, quota limits, or network issues.
 
 ## Customization
 
@@ -317,7 +318,7 @@ To add more remedies:
 - **Solution**: Run `python manage.py collectstatic` and check MEDIA settings
 
 **Issue**: AI consultation not working
-- **Solution**: Ensure user has updated their profile with skin type and allergies
+- **Solution**: Check `.env` in project root has a valid `OPENAI_API_KEY`, then restart server
 
 ### Getting Help
 
