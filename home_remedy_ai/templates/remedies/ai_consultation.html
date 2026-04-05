@@ -29,6 +29,36 @@
         transform: translateX(5px);
         box-shadow: 0 5px 20px rgba(0,0,0,0.15);
     }
+
+    .chip-wrap {
+        border: 2px solid #e0e0e0;
+        border-radius: 12px;
+        padding: 10px;
+        min-height: 52px;
+        background: #fff;
+    }
+
+    .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 12px;
+        border-radius: 999px;
+        background: #e9f7ef;
+        color: #1f6f46;
+        margin: 4px;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+
+    .chip button {
+        border: none;
+        background: transparent;
+        color: #1f6f46;
+        line-height: 1;
+        padding: 0;
+        font-size: 0.95rem;
+    }
 </style>
 {% endblock %}
 
@@ -38,7 +68,10 @@
         <h1 class="display-4 fw-bold">
             <i class="fas fa-robot me-3"></i>AI-Powered Consultation
         </h1>
-        <p class="lead">Get personalized remedy recommendations based on your available ingredients</p>
+        <p class="lead">Get live AI-generated remedy recommendations based on your inputs</p>
+        <p class="mb-0 small opacity-75">
+            <i class="fas fa-key me-1"></i>Requires OPENAI_API_KEY configuration on server
+        </p>
     </div>
     
     <div class="row">
@@ -62,23 +95,40 @@
                             rows="5" 
                             placeholder="Describe your problem in detail (e.g., dry skin, acne, hair fall, etc.)"
                             required
-                        ></textarea>
+                        >{{ problem_description|default:'' }}</textarea>
                         <small class="text-muted">Be as specific as possible for better recommendations</small>
                     </div>
                     
                     <div class="mb-4">
-                        <label for="available_ingredients" class="form-label">
+                        <label for="ingredient_input" class="form-label">
                             <strong>What ingredients do you have at home?</strong>
                         </label>
-                        <textarea 
-                            name="available_ingredients" 
-                            id="available_ingredients" 
-                            class="form-control" 
-                            rows="5" 
-                            placeholder="List all available ingredients (e.g., honey, lemon, turmeric, coconut oil, aloe vera, etc.)"
+                        <div class="row g-2 mb-2">
+                            <div class="col-md-9">
+                                <input
+                                    type="text"
+                                    id="ingredient_input"
+                                    class="form-control"
+                                    placeholder="Type ingredient and press Enter (e.g., honey)"
+                                >
+                            </div>
+                            <div class="col-md-3 d-grid">
+                                <button type="button" id="add_ingredient_btn" class="btn btn-outline-success">
+                                    <i class="fas fa-plus me-1"></i>Add
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="chip_wrap" class="chip-wrap mb-2"></div>
+
+                        <textarea
+                            name="available_ingredients"
+                            id="available_ingredients"
+                            class="form-control d-none"
+                            rows="3"
                             required
-                        ></textarea>
-                        <small class="text-muted">Separate ingredients with commas</small>
+                        >{{ available_ingredients|default:'' }}</textarea>
+                        <small class="text-muted">Add ingredients as chips. You can remove any chip before submitting.</small>
                     </div>
                     
                     <button type="submit" class="btn btn-primary btn-lg w-100">
@@ -132,4 +182,114 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    (function () {
+        const ingredientInput = document.getElementById('ingredient_input');
+        const addButton = document.getElementById('add_ingredient_btn');
+        const chipWrap = document.getElementById('chip_wrap');
+        const hiddenField = document.getElementById('available_ingredients');
+        const form = hiddenField ? hiddenField.closest('form') : null;
+
+        if (!ingredientInput || !addButton || !chipWrap || !hiddenField || !form) {
+            return;
+        }
+
+        const ingredients = [];
+
+        const normalize = (value) => value.trim().replace(/\s+/g, ' ');
+
+        const syncHiddenField = () => {
+            hiddenField.value = ingredients.join(', ');
+        };
+
+        const renderChips = () => {
+            chipWrap.innerHTML = '';
+
+            if (!ingredients.length) {
+                const empty = document.createElement('span');
+                empty.className = 'text-muted small';
+                empty.textContent = 'No ingredients added yet.';
+                chipWrap.appendChild(empty);
+                return;
+            }
+
+            ingredients.forEach((ingredient, index) => {
+                const chip = document.createElement('span');
+                chip.className = 'chip';
+                chip.innerHTML = `${ingredient}<button type="button" aria-label="Remove ingredient" data-index="${index}"><i class="fas fa-times"></i></button>`;
+                chipWrap.appendChild(chip);
+            });
+        };
+
+        const addIngredient = () => {
+            const raw = ingredientInput.value;
+            const value = normalize(raw);
+            if (!value) {
+                return;
+            }
+
+            const exists = ingredients.some(item => item.toLowerCase() === value.toLowerCase());
+            if (!exists) {
+                ingredients.push(value);
+                syncHiddenField();
+                renderChips();
+            }
+
+            ingredientInput.value = '';
+            ingredientInput.focus();
+        };
+
+        addButton.addEventListener('click', addIngredient);
+
+        ingredientInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                addIngredient();
+            }
+        });
+
+        chipWrap.addEventListener('click', (event) => {
+            const button = event.target.closest('button[data-index]');
+            if (!button) {
+                return;
+            }
+            const index = Number(button.dataset.index);
+            if (!Number.isNaN(index)) {
+                ingredients.splice(index, 1);
+                syncHiddenField();
+                renderChips();
+            }
+        });
+
+        form.addEventListener('submit', (event) => {
+            addIngredient();
+            syncHiddenField();
+            if (!hiddenField.value.trim()) {
+                event.preventDefault();
+                ingredientInput.focus();
+                alert('Please add at least one ingredient.');
+            }
+        });
+
+        const initialValue = hiddenField.value.trim();
+        if (initialValue) {
+            initialValue.split(',').forEach((item) => {
+                const value = normalize(item);
+                if (!value) {
+                    return;
+                }
+                const exists = ingredients.some(existing => existing.toLowerCase() === value.toLowerCase());
+                if (!exists) {
+                    ingredients.push(value);
+                }
+            });
+            syncHiddenField();
+        }
+
+        renderChips();
+    })();
+</script>
 {% endblock %}

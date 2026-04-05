@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q, Count
 from .models import Category, Problem, Remedy, UserFavorite, AIConsultation
-from ai_engine.services import generate_ai_remedy
+from ai_engine.services import generate_ai_remedy, parse_ai_remedy_payload
 
 def home(request):
     """Homepage with category showcase"""
@@ -116,6 +116,20 @@ def ai_consultation(request):
         if problem_description and available_ingredients:
             # Generate AI remedy
             ai_remedy = generate_ai_remedy(problem_description, available_ingredients, request.user)
+            parsed_remedy = parse_ai_remedy_payload(ai_remedy)
+
+            if parsed_remedy.get('generation_source') == 'unavailable':
+                messages.error(
+                    request,
+                    'Live AI is not available. Set OPENAI_API_KEY and retry to get a real AI-generated response.'
+                )
+                consultations = AIConsultation.objects.filter(user=request.user)[:5]
+                context = {
+                    'consultations': consultations,
+                    'problem_description': problem_description,
+                    'available_ingredients': available_ingredients,
+                }
+                return render(request, 'remedies/ai_consultation.html', context)
             
             # Save consultation
             consultation = AIConsultation.objects.create(
@@ -139,4 +153,9 @@ def ai_consultation(request):
 def consultation_detail(request, consultation_id):
     """View a specific AI consultation"""
     consultation = get_object_or_404(AIConsultation, id=consultation_id, user=request.user)
-    return render(request, 'remedies/consultation_detail.html', {'consultation': consultation})
+    ai_remedy = parse_ai_remedy_payload(consultation.suggested_remedy)
+    context = {
+        'consultation': consultation,
+        'ai_remedy': ai_remedy,
+    }
+    return render(request, 'remedies/consultation_detail.html', context)
