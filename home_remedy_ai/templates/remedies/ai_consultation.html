@@ -35,7 +35,7 @@
     }
 
     .chat-panel {
-        min-height: 760px;
+        min-height: 640px;
         display: flex;
         flex-direction: column;
     }
@@ -143,29 +143,52 @@
         <div class="position-relative" style="z-index: 1;">
             <div class="d-flex flex-wrap justify-content-between align-items-end gap-3">
                 <div>
-                    <p class="text-uppercase fw-semibold mb-2" style="letter-spacing: .12em; opacity: .8;">Live AI Consultation</p>
-                    <h1 class="display-5 fw-bold mb-2"><i class="fas fa-comments me-3"></i>Talk to the assistant like ChatGPT</h1>
-                    <p class="lead mb-0" style="max-width: 780px;">Share your concern, refine the context, and continue the conversation in multiple turns. The assistant responds from the live model, not a canned remedy database.</p>
+                    <p class="text-uppercase fw-semibold mb-2" style="letter-spacing: .12em; opacity: .8;">HomeHeal Consultation</p>
+                    <h1 class="display-5 fw-bold mb-2"><i class="fas fa-comments me-3"></i>Describe your issue and get a remedy</h1>
+                    <p class="lead mb-0" style="max-width: 780px;">Enter your problem and ingredients once, then continue the discussion in chat.</p>
                 </div>
                 <div class="text-end">
-                    <span class="badge bg-light text-dark px-3 py-2 mb-2"><i class="fas fa-bolt me-1"></i>Live AI only</span>
-                    <div class="small opacity-75">Your chat is kept in session and can be reopened from the recent consultations list.</div>
+                    <span class="badge bg-light text-dark px-3 py-2 mb-2"><i class="fas fa-bolt me-1"></i>AI Consultation</span>
+                    <div class="small opacity-75">If live AI is unavailable, a local remedy suggestion is still provided.</div>
                 </div>
             </div>
         </div>
     </div>
 
     <div class="row g-4 align-items-start">
-        <div class="col-lg-8">
+        <div class="col-12">
             <div class="chat-panel">
                 <div class="chat-header d-flex flex-wrap justify-content-between align-items-center gap-3">
                     <div>
                         <div class="fw-bold fs-5"><i class="fas fa-robot me-2"></i>Consultation Chat</div>
-                        <div class="small text-white-50">Ask follow-up questions, refine symptoms, or update the ingredients you have at home.</div>
+                        <div class="small text-white-50">Write your issue, mention ingredients if available, and get a practical remedy plan.</div>
                     </div>
                     <button type="button" class="btn btn-sm btn-outline-light" id="reset_chat_btn">
                         <i class="fas fa-trash-can me-2"></i>Clear Chat
                     </button>
+                </div>
+
+                <div class="px-4 pt-4">
+                    <div class="context-box">
+                        <form id="context_form" class="row g-3">
+                            <div class="col-lg-6">
+                                <label for="problem_description" class="form-label fw-semibold">Issue</label>
+                                <textarea id="problem_description" class="form-control" rows="3" placeholder="Example: acne with redness on cheeks">{{ chat_context.problem_description|default:'' }}</textarea>
+                            </div>
+                            <div class="col-lg-6">
+                                <label for="available_ingredients" class="form-label fw-semibold">Ingredients (optional)</label>
+                                <textarea id="available_ingredients" class="form-control" rows="3" placeholder="Example: aloe vera, honey, curd">{{ chat_context.available_ingredients|default:'' }}</textarea>
+                            </div>
+                            <div class="col-12 d-flex flex-wrap gap-2 align-items-center">
+                                <button type="submit" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-save me-2"></i>Save Details
+                                </button>
+                                <span class="small text-muted">You can leave ingredients empty. A starter remedy will still be suggested.</span>
+                            </div>
+                        </form>
+                        <div class="small text-muted mt-3 mb-1">Active ingredients</div>
+                        <div id="context_ingredients" class="d-flex flex-wrap"></div>
+                    </div>
                 </div>
 
                 <div id="chat_status" class="px-4 pt-3"></div>
@@ -174,14 +197,14 @@
                     {% if chat_history %}
                         {% for message in chat_history %}
                             <div class="bubble {% if message.role == 'user' %}user{% else %}assistant{% endif %}">
-                                <div class="bubble-label">{% if message.role == 'user' %}You{% else %}Live AI{% endif %}</div>
+                                <div class="bubble-label">{% if message.role == 'user' %}You{% else %}HomeHeal AI{% endif %}</div>
                                 {{ message.content }}
                             </div>
                         {% endfor %}
                     {% else %}
                         <div class="bubble assistant">
-                            <div class="bubble-label">Live AI</div>
-                            Start the consultation by saving your problem description and ingredients below, then send your first message. If you want, just type what is happening and the assistant will ask what it needs next.
+                            <div class="bubble-label">HomeHeal AI</div>
+                            Share your issue in one line (for example: "acne with itching") and send a message. Add ingredients if you have them.
                         </div>
                     {% endif %}
                 </div>
@@ -189,81 +212,39 @@
                 <div class="composer">
                     <form id="chat_form" class="mb-0">
                         <div class="input-group">
-                            <textarea id="chat_message" class="form-control" rows="3" placeholder="Type your follow-up question or symptom details..." required></textarea>
+                            <textarea id="chat_message" class="form-control" rows="3" placeholder="Type your issue, question, or follow-up..." required></textarea>
                             <button class="btn btn-primary px-4" id="send_message_btn" type="submit">
                                 <i class="fas fa-paper-plane me-2"></i>Send
                             </button>
                         </div>
-                        <div class="small text-muted mt-2">Shift+Enter for a new line. The assistant will keep context from earlier messages.</div>
+                        <div class="small text-muted mt-2">Shift+Enter for a new line.</div>
                     </form>
                 </div>
             </div>
         </div>
+    </div>
 
-        <div class="col-lg-4">
-            <div class="support-panel mb-4">
-                <div class="d-flex align-items-center justify-content-between mb-3">
-                    <h5 class="mb-0"><i class="fas fa-sliders me-2 text-primary"></i>Consultation Context</h5>
-                    {% if chat_context.problem_description or chat_context.available_ingredients %}
-                        <span class="badge bg-success-subtle text-success border border-success-subtle">Saved</span>
-                    {% endif %}
-                </div>
-
-                <form id="context_form">
-                    <div class="mb-3">
-                        <label for="problem_description" class="form-label fw-semibold">What problem are you facing?</label>
-                        <textarea id="problem_description" class="form-control" rows="4" placeholder="Dry skin, acne, hair fall, dandruff, irritation...">{{ chat_context.problem_description|default:'' }}</textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label for="available_ingredients" class="form-label fw-semibold">Ingredients available at home</label>
-                        <textarea id="available_ingredients" class="form-control" rows="4" placeholder="Honey, aloe vera, turmeric, yogurt...">{{ chat_context.available_ingredients|default:'' }}</textarea>
-                    </div>
-                    <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-outline-primary">
-                            <i class="fas fa-save me-2"></i>Update Context
-                        </button>
-                    </div>
-                </form>
-
-                {% if chat_context.problem_description or chat_context.available_ingredients %}
-                    <div class="context-box mt-4">
-                        <div class="small text-uppercase text-muted fw-semibold mb-2">Active Context</div>
-                        {% if chat_context.problem_description %}
-                            <div class="mb-2"><strong>Problem:</strong> {{ chat_context.problem_description }}</div>
-                        {% endif %}
-                        {% if chat_context.available_ingredients %}
-                            <div class="small text-muted mb-2"><strong>Ingredients:</strong></div>
-                            <div id="context_ingredients" class="d-flex flex-wrap"></div>
-                        {% endif %}
-                    </div>
-                {% endif %}
-            </div>
-
-            <div class="support-panel mb-4">
-                <h5 class="mb-3"><i class="fas fa-history me-2 text-primary"></i>Recent Consultations</h5>
+    <div class="row g-3 mt-2">
+        <div class="col-12">
+            <div class="support-panel">
+                <h6 class="mb-3"><i class="fas fa-history me-2 text-primary"></i>Recent Consultations</h6>
                 {% if consultations %}
-                    {% for consultation in consultations %}
-                        <div class="history-card card mb-3">
-                            <div class="card-body">
-                                <small class="text-muted d-block mb-2"><i class="fas fa-calendar me-2"></i>{{ consultation.created_at|date:"M d, Y" }}</small>
-                                <div class="fw-semibold mb-2">{{ consultation.problem_description|truncatewords:10 }}</div>
-                                <a href="{% url 'consultation_detail' consultation.id %}" class="btn btn-sm btn-outline-primary">View Details</a>
+                    <div class="row g-3">
+                        {% for consultation in consultations %}
+                            <div class="col-md-6 col-lg-4">
+                                <div class="history-card card h-100">
+                                    <div class="card-body">
+                                        <small class="text-muted d-block mb-2"><i class="fas fa-calendar me-2"></i>{{ consultation.created_at|date:"M d, Y" }}</small>
+                                        <div class="fw-semibold mb-2">{{ consultation.problem_description|truncatewords:10 }}</div>
+                                        <a href="{% url 'consultation_detail' consultation.id %}" class="btn btn-sm btn-outline-primary">View Details</a>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    {% endfor %}
+                        {% endfor %}
+                    </div>
                 {% else %}
                     <p class="text-muted mb-0">No consultations yet.</p>
                 {% endif %}
-            </div>
-
-            <div class="support-panel">
-                <h6 class="mb-3"><i class="fas fa-lightbulb me-2 text-warning"></i>How to get better answers</h6>
-                <div class="d-flex flex-wrap">
-                    <span class="context-chip"><i class="fas fa-bullseye"></i>Describe the exact symptom</span>
-                    <span class="context-chip"><i class="fas fa-leaf"></i>List ingredients you already have</span>
-                    <span class="context-chip"><i class="fas fa-user-check"></i>Mention allergies or sensitive skin</span>
-                    <span class="context-chip"><i class="fas fa-message"></i>Ask follow-up questions naturally</span>
-                </div>
             </div>
         </div>
     </div>
@@ -307,7 +288,7 @@
 
             const label = document.createElement('div');
             label.className = 'bubble-label';
-            label.textContent = role === 'user' ? 'You' : 'Live AI';
+            label.textContent = role === 'user' ? 'You' : 'HomeHeal AI';
 
             const content = document.createElement('div');
             content.textContent = text;
@@ -357,58 +338,69 @@
             return response.json();
         };
 
+        const saveContext = async () => {
+            const result = await postForm({
+                action: 'context',
+                problem_description: problemDescription.value,
+                available_ingredients: availableIngredients.value,
+            });
+
+            if (!result.ok) {
+                throw new Error(result.error || 'Unable to save consultation details.');
+            }
+
+            renderContextIngredients();
+            return result;
+        };
+
         contextForm.addEventListener('submit', async (event) => {
             event.preventDefault();
-            setStatus('Saving consultation context...', 'secondary');
+            setStatus('Saving details...', 'secondary');
 
             try {
-                const result = await postForm({
-                    action: 'context',
-                    problem_description: problemDescription.value,
-                    available_ingredients: availableIngredients.value,
-                });
-
-                if (!result.ok) {
-                    throw new Error(result.error || 'Unable to update the consultation context.');
-                }
-
-                renderContextIngredients();
-                setStatus('Context updated. Send your next message to continue the consultation.', 'success');
+                await saveContext();
+                setStatus('Details saved. Send your message to continue.', 'success');
                 setTimeout(() => setStatus('', 'info'), 3500);
             } catch (error) {
-                setStatus(error.message || 'Unable to update the consultation context.', 'danger');
+                setStatus(error.message || 'Unable to save consultation details.', 'danger');
             }
         });
 
         chatForm.addEventListener('submit', async (event) => {
             event.preventDefault();
             const message = chatMessage.value.trim();
-            if (!message) {
+            const issue = problemDescription.value.trim();
+            const messageToSend = message || issue;
+
+            if (!messageToSend) {
+                setStatus('Enter your issue or type a message to continue.', 'warning');
                 return;
             }
 
-            appendBubble('user', message);
+            appendBubble('user', messageToSend);
             chatMessage.value = '';
             chatMessage.focus();
             sendButton.disabled = true;
-            setStatus('Live AI is thinking...', 'secondary');
+            setStatus('Preparing remedy response...', 'secondary');
 
             try {
+                await saveContext();
+
                 const result = await postForm({
                     action: 'message',
-                    message,
+                    message: messageToSend,
                 });
 
                 if (!result.ok) {
-                    throw new Error(result.error || 'The live AI service did not return a usable reply.');
+                    throw new Error(result.error || 'Unable to generate a remedy response right now.');
                 }
 
-                appendBubble('assistant', result.assistant || 'The live AI service returned an empty response.');
-                setStatus('Reply generated successfully.', 'success');
+                appendBubble('assistant', result.assistant || 'No response generated. Please try again.');
+                setStatus('Response generated successfully.', 'success');
                 setTimeout(() => setStatus('', 'info'), 3000);
             } catch (error) {
-                appendBubble('assistant', error.message || 'The live AI service did not return a usable reply.');
-                setStatus(error.message || 'The live AI service did not return a usable reply.', 'danger');
+                appendBubble('assistant', error.message || 'Unable to generate a remedy response right now.');
+                setStatus(error.message || 'Unable to generate a remedy response right now.', 'danger');
             } finally {
                 sendButton.disabled = false;
             }
@@ -427,7 +419,7 @@
                 }
 
                 chatTranscript.innerHTML = '';
-                appendBubble('assistant', 'Chat cleared. Add context again and start a new conversation.');
+                appendBubble('assistant', 'Chat cleared. Enter your issue and send a message to start again.');
                 setStatus('Chat cleared.', 'success');
                 setTimeout(() => setStatus('', 'info'), 2500);
             } catch (error) {

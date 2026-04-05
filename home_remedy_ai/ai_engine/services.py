@@ -171,20 +171,32 @@ def generate_ai_remedy(problem_description, available_ingredients, user):
 def generate_ai_chat_reply(user_message, conversation_history, user, consultation_context=None):
     """Generate a conversational live AI reply for the consultation chat."""
     profile = _extract_profile(user)
+    context = consultation_context or {}
     reply_payload, failure_reason = _generate_with_live_chat(
         user_message=user_message,
         conversation_history=conversation_history,
         profile=profile,
-        consultation_context=consultation_context or {},
+        consultation_context=context,
     )
 
     if reply_payload:
         reply_payload["generation_source"] = "live_chat"
         return reply_payload
 
+    fallback_reply, matched_problem = _build_local_chat_fallback_reply(
+        user_message=user_message,
+        profile=profile,
+        consultation_context=context,
+    )
+
+    unavailable_note = _live_ai_unavailable_reply(failure_reason)
     return {
-        "reply": _live_ai_unavailable_reply(failure_reason),
-        "generation_source": "unavailable",
+        "reply": f"{fallback_reply}\n\nNote: {unavailable_note}",
+        "matched_problem": matched_problem,
+        "next_question": "",
+        "safety_note": "If symptoms worsen, spread rapidly, or involve infection, consult a doctor.",
+        "follow_up_needed": False,
+        "generation_source": "local_fallback",
         "failure_reason": failure_reason or "unknown",
     }
 
@@ -515,8 +527,8 @@ def _generate_with_live_chat(user_message, conversation_history, profile, consul
         "You are HomeHeal, a live AI home-remedy consultation assistant. Hold a natural multi-turn conversation. "
         "Use the chat history and the user's consultation context. Do not mention internal databases, rule-based content, "
         "or fallback logic. Do not base the answer on any pre-fed remedy library. Reason from the user's symptoms, "
-        "available ingredients, profile, and conversation. If important details are missing, ask one focused follow-up "
-        "question before giving a final recommendation. Keep replies concise but useful. Always include safety guidance "
+        "available ingredients, profile, and conversation. If important details are missing, still provide a safe starter "
+        "remedy plan using common household ingredients, and ask one focused follow-up question for refinement. Keep replies concise but useful. Always include safety guidance "
         "when symptoms are severe, persistent, unusual, or involve broken skin. Respond as valid JSON with keys: "
         "reply, matched_problem, next_question, safety_note, follow_up_needed."
     )
@@ -627,6 +639,44 @@ def _extract_live_ai_text(data):
                 return text.strip()
 
     return ""
+
+
+def _build_local_chat_fallback_reply(user_message, profile, consultation_context):
+    problem_description = str(consultation_context.get("problem_description") or "").strip()
+    ingredients_text = str(consultation_context.get("available_ingredients") or "").strip()
+
+    if not problem_description:
+        problem_description = user_message
+
+    ingredient_tokens = _parse_ingredients(ingredients_text)
+    sections = _generate_rule_based(problem_description, ingredient_tokens, profile)
+
+    ingredients_line = ", ".join(item.split(" - ")[0] for item in sections.get("ingredients", [])[:4])
+    if not ingredients_line:
+        ingredients_line = "yogurt, aloe vera"
+
+    instructions = sections.get("instructions", [])[:4]
+    instruction_text = "\n".join(f"{index + 1}. {step}" for index, step in enumerate(instructions))
+    if not instruction_text:
+        instruction_text = (
+            "1. Mix the ingredients into a smooth paste.\n"
+            "2. Patch test first.\n"
+            "3. Apply a thin layer and rinse after 15 minutes."
+        )
+
+    precautions = sections.get("precautions", [])[:2]
+    precaution_text = " ".join(precautions) if precautions else "Patch test first and stop if irritation appears."
+
+    reply = (
+        f"Based on your concern, here is a starter remedy for {sections.get('matched_problem', 'General Care')}.\n"
+        f"Recommended ingredients: {ingredients_line}.\n\n"
+        f"How to use:\n{instruction_text}\n\n"
+        f"Usage: {sections.get('usage', 'Use 2 times weekly and monitor response.')}\n"
+        f"Safety: {precaution_text}\n"
+        "If you share exact symptom severity and any allergies, I can refine this further."
+    )
+
+    return reply, sections.get("matched_problem", "General Care")
 
 
 def _normalize_sections(data):
