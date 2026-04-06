@@ -350,7 +350,9 @@
             label.textContent = 'HomeHeal AI';
             bubble.appendChild(label);
 
-            if (introText) {
+            const introLooksLikeDetailedPlan = /recommended ingredients|preparation and application steps|usage schedule|expected benefits|safety precautions/i.test(introText);
+
+            if (introText && !introLooksLikeDetailedPlan) {
                 const intro = document.createElement('div');
                 intro.textContent = introText;
                 bubble.appendChild(intro);

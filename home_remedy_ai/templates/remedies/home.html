@@ -65,7 +65,7 @@
 <section class="hero-section">
     <div class="container">
         <h1 class="fade-in-up">
-            <i class="fas fa-leaf"></i> Welcome to HomeHeal
+            <i class="fas fa-house-medical"></i> Welcome to HomeHeal
         </h1>
         <p class="fade-in-up">Discover Natural Remedies for a Healthier You</p>
         <div class="search-wrapper fade-in-up">
@@ -136,8 +136,8 @@
     <div class="row g-4">
         {% for remedy in popular_remedies %}
         <div class="col-md-4">
-            <div class="card remedy-card">
-                <div class="card-body">
+            <div class="card remedy-card h-100">
+                <div class="card-body d-flex flex-column">
                     <div class="d-flex justify-content-between align-items-start mb-3">
                         <h5 class="card-title">{{ remedy.title }}</h5>
                         <span class="badge bg-success">{{ remedy.effectiveness_rating }}/10</span>
@@ -148,7 +148,7 @@
                             <i class="fas fa-tag me-2"></i>{{ remedy.problem.category.name }}
                         </small>
                     </div>
-                    <a href="{% url 'remedy_detail' remedy.id %}" class="btn btn-primary w-100">
+                    <a href="{% url 'remedy_detail' remedy.id %}" class="btn btn-primary w-100 mt-auto">
                         <i class="fas fa-eye me-2"></i>View Details
                     </a>
                 </div>
@@ -163,7 +163,7 @@
 <div class="container mb-5">
     <div class="row g-4">
         <div class="col-md-4">
-            <div class="card text-center p-4">
+            <div class="card text-center p-4 h-100">
                 <div class="card-body">
                     <i class="fas fa-robot fa-3x text-primary mb-3"></i>
                     <h4>AI-Powered Solutions</h4>
@@ -175,7 +175,7 @@
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card text-center p-4">
+            <div class="card text-center p-4 h-100">
                 <div class="card-body">
                     <i class="fas fa-leaf fa-3x text-success mb-3"></i>
                     <h4>100% Natural</h4>
@@ -184,7 +184,7 @@
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card text-center p-4">
+            <div class="card text-center p-4 h-100">
                 <div class="card-body">
                     <i class="fas fa-book-open fa-3x text-info mb-3"></i>
                     <h4>Detailed Guides</h4>
